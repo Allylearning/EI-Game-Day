@@ -8,24 +8,25 @@ import { players } from './schema';
 import { desc } from 'drizzle-orm';
 import type { LeaderboardEntry } from './types';
 
-function getDb() {
-  if (!process.env.DATABASE_URL) {
-    console.error("DATABASE_URL environment variable is not set.");
-    return null;
-  }
+// Properly type the Neon database client
+let db: ReturnType<typeof drizzle<typeof schema>>;
+let sql: ReturnType<typeof neon> | null = null;
+
+if (process.env.DATABASE_URL) {
   // Neon's serverless driver doesn't support the channel_binding parameter.
   // We'll remove it from the connection string if it exists.
   const connectionString = process.env.DATABASE_URL.replace('&channel_binding=require', '');
-  const sql = neon(connectionString);
-  return drizzle(sql, { schema });
+  sql = neon(connectionString);
+  db = drizzle(sql, { schema });
+} else {
+  console.warn("DATABASE_URL is not set. Database operations will be skipped.");
 }
 
 
 // This function now fetches the top 10 players from the actual database
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
-  const db = getDb();
   if (!db) {
-    console.log("Skipping getLeaderboard: Database connection failed.");
+    console.log("Skipping getLeaderboard: no database connection.");
     return [];
   }
 
@@ -52,14 +53,12 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
 // This is a placeholder, you'll need to call this after a quiz is completed.
 export async function addPlayerScore(playerData: {
   name: string;
-  email: string; // Add email here
   club?: string;
   score: number;
   selfie?: string;
 }) {
-    const db = getDb();
     if (!db) {
-        console.log(`Skipping addPlayerScore for ${playerData.name}: Database connection failed.`);
+        console.log(`Skipping addPlayerScore for ${playerData.name}: no database connection.`);
         return;
     }
   try {
@@ -70,15 +69,13 @@ export async function addPlayerScore(playerData: {
       .insert(players)
       .values({
         name: playerData.name,
-        email: playerData.email,
         club: playerData.club,
         score: playerData.score,
         selfie: playerData.selfie,
       })
       .onConflictDoUpdate({
-        target: players.email, // Use email as the unique identifier
+        target: players.name, // Assuming name is unique.
         set: {
-          name: playerData.name,
           score: playerData.score,
           // You might want to update other fields as well, e.g., if their selfie changes.
           selfie: playerData.selfie,
@@ -89,8 +86,7 @@ export async function addPlayerScore(playerData: {
         // where: sql`${players.score} < ${playerData.score}`,
       });
     console.log(`Score for ${playerData.name} has been added/updated.`);
-  } catch (error)
-   {
+  } catch (error) {
     console.error('Error adding player score to database:', error);
   }
 }

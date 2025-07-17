@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { scenarios } from '@/lib/scenarios';
-import { gradeAllAnswersAction, transcribeAudioAction, getScenarioFeedbackAction } from '@/lib/actions';
+import { gradeAllAnswersAction, transcribeAudioAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -248,44 +248,28 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
     };
     setMatchEvents(prevEvents => [...prevEvents, newEvent]);
 
-    let commentary: string | null | undefined = null;
-    
-    if (scenario.interaction === 'text') {
-        startSubmittingTransition(async () => {
-            const feedbackResult = await getScenarioFeedbackAction({ scenario: scenario.text, answer: currentAnswer });
-            if (feedbackResult.success && feedbackResult.commentary) {
-                setShowFeedback(feedbackResult.commentary);
-            } else {
-                // If AI feedback fails, just proceed without it. No need to show error.
-                proceedToNextStep();
-            }
-        });
-        return; // Wait for AI feedback before proceeding
-    } else {
-       commentary = scenario.commentary || (scenario.interaction === 'choice' && scenario.options?.find(opt => opt.value === currentAnswer)?.commentary);
-    }
+    const commentary = scenario.commentary || (scenario.interaction === 'choice' && scenario.options?.find(opt => opt.value === currentAnswer)?.commentary);
     
     if (commentary) {
       setShowFeedback(commentary);
     } else {
-      proceedToNextStep();
+      startSubmittingTransition(() => {
+        proceedToNextStep(updatedAnswers);
+      });
     }
   };
 
-  const proceedToNextStep = () => {
+  const proceedToNextStep = (finalAnswers?: Record<string, string>) => {
      setShowFeedback(null);
      setDroppedItems([]);
      setSelectedChoice(null);
      hasSubmittedRef.current = false;
+     
+     const answersToSubmit = finalAnswers || allAnswers;
 
     if (currentScenario === scenarios.length - 1) {
-      // Need to use a timeout to allow the final `allAnswers` state to update before submitting
-      setTimeout(() => {
-        startSubmittingTransition(async () => {
-          // Get the final answers directly before sending
-          const finalAnswers = { ...allAnswers, [`scenario${scenarios[scenarios.length - 1].id}`]: form.getValues('currentAnswer') };
-          
-          const result = await gradeAllAnswersAction({answers: finalAnswers, events: matchEvents, userData});
+      startSubmittingTransition(async () => {
+          const result = await gradeAllAnswersAction({answers: answersToSubmit, events: matchEvents, userData});
           
           onQuizComplete(result.data);
 
@@ -297,8 +281,6 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
             });
           }
         });
-      }, 0)
-
     } else {
       setCurrentScenario(currentScenario + 1);
       reset({ currentAnswer: '' });
@@ -356,11 +338,6 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
       answer = selectedChoice;
     }
     
-    // For final step, we need to update the form value before submitting.
-    if (currentScenario === scenarios.length - 1) {
-        setValue('currentAnswer', answer);
-    }
-    
     handleAnswerSubmit({ currentAnswer: answer });
   };
 
@@ -412,7 +389,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
                 {showFeedback}
               </AlertDescription>
             </Alert>
-            <Button onClick={proceedToNextStep} className="font-extrabold">
+            <Button onClick={() => proceedToNextStep()} className="font-extrabold">
               {currentScenario === scenarios.length - 1 ? 'Finish & See Results' : 'Continue'}
             </Button>
           </div>

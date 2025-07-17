@@ -1,7 +1,6 @@
 'use server';
 
 import { getPlayerReport, type GetPlayerReportInput } from '@/ai/flows/get-player-report';
-import { getScenarioFeedback, type GetScenarioFeedbackInput } from '@/ai/flows/get-scenario-feedback';
 import { transcribeAudio, type TranscribeAudioInput } from '@/ai/flows/transcribe-audio';
 import type { MatchEvent, QuizResult, UserData } from './types';
 import { addPlayerScore } from './db';
@@ -120,17 +119,5 @@ export async function transcribeAudioAction(
   } catch (error) {
     console.error('Error transcribing audio:', error);
     return { success: false, error: 'Failed to transcribe audio. Please try again.' };
-  }
-}
-
-export async function getScenarioFeedbackAction(
-  input: GetScenarioFeedbackInput
-): Promise<{ success: boolean; commentary?: string; error?: string }> {
-  try {
-    const result = await getScenarioFeedback(input);
-    return { success: true, commentary: result.commentary };
-  } catch (error) {
-    console.error('Error getting scenario feedback:', error);
-    return { success: false, error: 'Failed to get AI feedback.' };
   }
 }

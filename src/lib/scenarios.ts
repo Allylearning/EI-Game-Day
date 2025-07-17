@@ -22,6 +22,7 @@ export const scenarios = [
     text: "You’ve just come on as a sub and break through the defence. You’re one-on-one with the keeper. You feel the pressure — teammates shouting, crowd yelling.",
     description: "What’s going through your head, and how do you handle this moment?",
     interaction: "text",
+    commentary: "A moment of high pressure! Whatever the outcome, keeping your cool and making a decisive choice is what counts."
   },
   { 
     id: 3, 
@@ -29,7 +30,7 @@ export const scenarios = [
     text: "After you lose the ball, a teammate shouts at you. You feel a flash of anger and embarrassment.",
     description: "What's your immediate reaction?",
     interaction: "choice",
-    timer: 20,
+    timer: 15,
     options: [
       {
         icon: "😡",
@@ -58,6 +59,7 @@ export const scenarios = [
     description: "What do you say or do?",
     interaction: "text",
     isMandatoryConcede: true,
+    commentary: "The dressing room is where leaders are made. Your words and actions now can lift the whole team for the second half."
   },
   { 
     id: 5, 
