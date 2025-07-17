@@ -76,7 +76,6 @@ export async function gradeAllAnswersAction(
     if (userData.leaderboardOptIn) {
       await addPlayerScore({
         name: userData.name,
-        email: userData.email,
         club: userData.club,
         score: overallScore,
         selfie: userData.selfie,

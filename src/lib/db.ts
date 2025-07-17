@@ -52,7 +52,6 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
 // This is a placeholder, you'll need to call this after a quiz is completed.
 export async function addPlayerScore(playerData: {
   name: string;
-  email: string; // Add email here
   club?: string;
   score: number;
   selfie?: string;
@@ -63,32 +62,17 @@ export async function addPlayerScore(playerData: {
         return;
     }
   try {
-    // This will insert a new player or update the score if the name already exists.
-    // Note: For a real production app, you'd want a more robust way to identify users,
-    // like a unique user ID, instead of just their name.
+    // This will insert a new player score every time.
     await db
       .insert(players)
       .values({
         name: playerData.name,
-        email: playerData.email,
         club: playerData.club,
         score: playerData.score,
         selfie: playerData.selfie,
-      })
-      .onConflictDoUpdate({
-        target: players.email, // Use email as the unique identifier
-        set: {
-          name: playerData.name,
-          score: playerData.score,
-          // You might want to update other fields as well, e.g., if their selfie changes.
-          selfie: playerData.selfie,
-          club: playerData.club,
-          updatedAt: new Date(),
-        },
-        // This condition ensures you only update the score if the new one is higher.
-        // where: sql`${players.score} < ${playerData.score}`,
+        updatedAt: new Date(),
       });
-    console.log(`Score for ${playerData.name} has been added/updated.`);
+    console.log(`Score for ${playerData.name} has been added.`);
   } catch (error)
    {
     console.error('Error adding player score to database:', error);
