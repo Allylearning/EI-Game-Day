@@ -11,9 +11,10 @@ async function sendToCrmAction(data: { name: string; email: string; club?: strin
   const { name, email, club } = data;
   const crmEndpoint = process.env.FORCE24_API_ENDPOINT;
   const crmApiKey = process.env.FORCE24_API_KEY;
+  const crmApiSecret = process.env.FORCE24_API_SECRET;
   const crmMarketingListId = process.env.FORCE24_MARKETING_LIST_ID;
 
-  if (!crmEndpoint || !crmApiKey || !crmMarketingListId) {
+  if (!crmEndpoint || !crmApiKey || !crmApiSecret || !crmMarketingListId) {
     console.log('CRM credentials or Marketing List ID not found. Skipping CRM submission.');
     return; // Don't throw an error, just skip if not configured
   }
@@ -23,7 +24,8 @@ async function sendToCrmAction(data: { name: string; email: string; club?: strin
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${crmApiKey}`, // Assuming Bearer token auth
+        'X-Api-Key': crmApiKey,
+        'X-Api-Secret': crmApiSecret,
       },
       body: JSON.stringify({
         name,
