@@ -19,7 +19,15 @@ async function sendToCrmAction(data: { name: string; email: string; club?: strin
     return;
   }
 
+  const payload = {
+    name,
+    email,
+    club: club || 'N/A',
+    marketingListId: crmMarketingListId,
+  };
+
   try {
+    console.log('Attempting to send data to CRM:', JSON.stringify(payload, null, 2));
     const response = await fetch(crmEndpoint, {
       method: 'POST',
       headers: {
@@ -27,23 +35,21 @@ async function sendToCrmAction(data: { name: string; email: string; club?: strin
         'X-Api-Key': crmApiKey,
         'X-Api-Secret': crmApiSecret,
       },
-      body: JSON.stringify({
-        name,
-        email,
-        club: club || 'N/A',
-        marketingListId: crmMarketingListId,
-      }),
+      body: JSON.stringify(payload),
     });
+
+    console.log('CRM API Response Status:', response.status, response.statusText);
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error('Failed to send data to CRM. Status:', response.status, response.statusText);
+      console.error('Failed to send data to CRM. API responded with an error.');
       console.error('CRM Error Body:', errorBody);
     } else {
-      console.log('Successfully sent user data to CRM.');
+      const responseBody = await response.json();
+      console.log('Successfully sent user data to CRM. Response:', responseBody);
     }
   } catch (error) {
-    console.error('Error submitting data to CRM:', error);
+    console.error('An unexpected error occurred while submitting data to CRM:', error);
   }
 }
 
