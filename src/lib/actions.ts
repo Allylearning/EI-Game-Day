@@ -15,8 +15,8 @@ async function sendToCrmAction(data: { name: string; email: string; club?: strin
   const crmMarketingListId = process.env.FORCE24_MARKETING_LIST_ID;
 
   if (!crmEndpoint || !crmApiKey || !crmApiSecret || !crmMarketingListId) {
-    console.log('CRM credentials or Marketing List ID not found. Skipping CRM submission.');
-    return; // Don't throw an error, just skip if not configured
+    console.log('CRM credentials or Marketing List ID not found in environment variables. Skipping CRM submission.');
+    return;
   }
 
   try {
@@ -36,9 +36,8 @@ async function sendToCrmAction(data: { name: string; email: string; club?: strin
     });
 
     if (!response.ok) {
-      // Log the error but don't let it crash the main application flow
-      console.error('Failed to send data to CRM:', response.statusText);
       const errorBody = await response.text();
+      console.error('Failed to send data to CRM. Status:', response.status, response.statusText);
       console.error('CRM Error Body:', errorBody);
     } else {
       console.log('Successfully sent user data to CRM.');
