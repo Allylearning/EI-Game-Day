@@ -7,11 +7,53 @@ import type { MatchEvent, QuizResult, UserData } from './types';
 import { addPlayerScore } from './db';
 import { getOverallScore } from './helpers';
 
+async function sendToCrmAction(data: { name: string; email: string; club?: string }) {
+  const { name, email, club } = data;
+  const crmEndpoint = process.env.FORCE24_API_ENDPOINT;
+  const crmApiKey = process.env.FORCE24_API_KEY;
+  const crmMarketingListId = process.env.FORCE24_MARKETING_LIST_ID;
+
+  if (!crmEndpoint || !crmApiKey || !crmMarketingListId) {
+    console.log('CRM credentials or Marketing List ID not found. Skipping CRM submission.');
+    return; // Don't throw an error, just skip if not configured
+  }
+
+  try {
+    const response = await fetch(crmEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${crmApiKey}`, // Assuming Bearer token auth
+      },
+      body: JSON.stringify({
+        name,
+        email,
+        club: club || 'N/A',
+        marketingListId: crmMarketingListId,
+      }),
+    });
+
+    if (!response.ok) {
+      // Log the error but don't let it crash the main application flow
+      console.error('Failed to send data to CRM:', response.statusText);
+      const errorBody = await response.text();
+      console.error('CRM Error Body:', errorBody);
+    } else {
+      console.log('Successfully sent user data to CRM.');
+    }
+  } catch (error) {
+    console.error('Error submitting data to CRM:', error);
+  }
+}
 
 export async function gradeAllAnswersAction(
   {answers, events, userData}: {answers: Record<string, string>, events: MatchEvent[], userData: UserData}
 ): Promise<{ success: boolean; data: QuizResult; error?: string }> {
   try {
+    // Fire off the CRM submission. We don't wait for it to complete
+    // so it doesn't slow down the user experience.
+    sendToCrmAction({ name: userData.name, email: userData.email, club: userData.club });
+
     const reportInput: GetPlayerReportInput = {
       scenario1: answers['scenario1'] || 'No answer provided.',
       scenario2: answers['scenario2'] || 'No answer provided.',
@@ -28,6 +70,7 @@ export async function gradeAllAnswersAction(
     if (userData.leaderboardOptIn) {
       await addPlayerScore({
         name: userData.name,
+        email: userData.email,
         club: userData.club,
         score: overallScore,
         selfie: userData.selfie,
