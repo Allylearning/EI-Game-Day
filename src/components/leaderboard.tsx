@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { LeaderboardEntry } from '@/lib/types';
 import { Crown } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getLeaderboard } from '@/lib/db';
 import { Skeleton } from './ui/skeleton';
 
@@ -58,21 +58,22 @@ export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        setLoading(true);
-        const data = await getLeaderboard();
-        setLeaderboard(data);
-      } catch (error) {
-        console.error("Failed to fetch leaderboard", error);
-        // Optionally, set some error state to show in the UI
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchLeaderboard();
+  const fetchLeaderboard = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getLeaderboard();
+      setLeaderboard(data);
+    } catch (error) {
+      console.error("Failed to fetch leaderboard", error);
+      // Optionally, set some error state to show in the UI
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, [fetchLeaderboard]);
 
   return (
     <div className="w-full">
