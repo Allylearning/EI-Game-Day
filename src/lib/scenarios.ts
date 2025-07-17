@@ -29,7 +29,7 @@ export const scenarios = [
     text: "After you lose the ball, a teammate shouts at you. You feel a flash of anger and embarrassment.",
     description: "What's your immediate reaction?",
     interaction: "choice",
-    timer: 15,
+    timer: 20,
     options: [
       {
         icon: "😡",
