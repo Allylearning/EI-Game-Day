@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getPlayerReport, type GetPlayerReportInput } from '@/ai/flows/get-player-report';
@@ -7,6 +8,8 @@ import { addPlayerScore } from './db';
 import { getOverallScore } from './helpers';
 
 async function sendToCrmAction(data: { name: string; email: string; club?: string }) {
+  console.log('--- Starting CRM Submission ---');
+  
   const { name, email, club } = data;
   const crmEndpoint = process.env.FORCE24_API_ENDPOINT;
   const crmApiKey = process.env.FORCE24_API_KEY;
@@ -14,7 +17,13 @@ async function sendToCrmAction(data: { name: string; email: string; club?: strin
   const crmMarketingListId = process.env.FORCE24_MARKETING_LIST_ID;
 
   if (!crmEndpoint || !crmApiKey || !crmApiSecret || !crmMarketingListId) {
-    console.log('CRM credentials or Marketing List ID not found in environment variables. Skipping CRM submission.');
+    console.error('CRM Configuration Error: One or more environment variables are missing.');
+    console.log('FORCE24_API_ENDPOINT:', crmEndpoint ? 'Loaded' : 'Missing');
+    console.log('FORCE24_API_KEY:', crmApiKey ? 'Loaded' : 'Missing');
+    console.log('FORCE24_API_SECRET:', crmApiSecret ? 'Loaded' : 'Missing');
+    console.log('FORCE24_MARKETING_LIST_ID:', crmMarketingListId ? 'Loaded' : 'Missing');
+    console.log('Skipping CRM submission.');
+    console.log('--- CRM Submission Ended ---');
     return;
   }
 
@@ -25,30 +34,40 @@ async function sendToCrmAction(data: { name: string; email: string; club?: strin
     marketingListId: crmMarketingListId,
   };
 
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Api-Key': crmApiKey,
+    'X-Api-Secret': crmApiSecret,
+  };
+
+  console.log('Sending to Endpoint:', crmEndpoint);
+  console.log('Request Headers:', {
+    ...headers,
+    'X-Api-Secret': '********', // Mask secret in logs
+  });
+  console.log('Request Payload:', JSON.stringify(payload, null, 2));
+
   try {
-    console.log('Attempting to send data to CRM:', JSON.stringify(payload, null, 2));
     const response = await fetch(crmEndpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Api-Key': crmApiKey,
-        'X-Api-Secret': crmApiSecret,
-      },
+      headers: headers,
       body: JSON.stringify(payload),
     });
 
     console.log('CRM API Response Status:', response.status, response.statusText);
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error('Failed to send data to CRM. API responded with an error.');
-      console.error('CRM Error Body:', errorBody);
+    const responseBody = await response.text();
+    console.log('CRM API Raw Response Body:', responseBody);
+
+    if (response.ok) {
+        console.log('Successfully sent user data to CRM.');
     } else {
-      const responseBody = await response.json();
-      console.log('Successfully sent user data to CRM. Response:', responseBody);
+        console.error('Failed to send data to CRM. API responded with an error.');
     }
   } catch (error) {
     console.error('An unexpected error occurred while submitting data to CRM:', error);
+  } finally {
+    console.log('--- CRM Submission Ended ---');
   }
 }
 
