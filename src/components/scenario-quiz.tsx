@@ -203,16 +203,17 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
   }, [currentScenario]);
 
   const getScoreChange = (minute: number, answer: string): number => {
+    const lowerCaseAnswer = answer.toLowerCase();
     switch (minute) {
         case 30: // Teammate conflict
-            return answer.includes('shout back') ? -1 : 0;
+            return lowerCaseAnswer.includes('shout back') ? -1 : 0;
         case 60: // Defender mistake
-            return answer.includes('sprint') || answer.includes('glare') ? -1 : 0;
-        case 90: // Final shot
-            return answer.includes('Pass to my teammate') ? 1 : 0;
+            return lowerCaseAnswer.includes('sprint') || lowerCaseAnswer.includes('glare') ? -1 : 0;
+        case 90+3: // Final shot
+            return lowerCaseAnswer.includes('pass') ? 1 : 0;
         case 15: // One-on-one. A positive answer should result in a goal. We can be generous here.
             const negativeKeywords = ['miss', 'hesitate', 'panic', 'fail', 'wide', 'over the bar'];
-            return negativeKeywords.some(kw => answer.toLowerCase().includes(kw)) ? 0 : 1;
+            return negativeKeywords.some(kw => lowerCaseAnswer.includes(kw)) ? 0 : 1;
         default:
             return 0;
     }
@@ -253,9 +254,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
     if (commentary) {
       setShowFeedback(commentary);
     } else {
-      startSubmittingTransition(() => {
-        proceedToNextStep(updatedAnswers);
-      });
+      proceedToNextStep(updatedAnswers);
     }
   };
 
@@ -399,15 +398,15 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
             <div className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {scenario.options
-                        .filter(opt => !droppedItems.includes(opt))
+                        .filter(opt => !droppedItems.includes(opt.value))
                         .map(option => (
                         <div
-                            key={option}
+                            key={option.value}
                             draggable
-                            onDragStart={(e) => handleDragStart(e, option)}
+                            onDragStart={(e) => handleDragStart(e, option.value)}
                             className="p-3 bg-muted rounded-md cursor-grab active:cursor-grabbing"
                         >
-                            {option}
+                            {option.text}
                         </div>
                     ))}
                 </div>
@@ -417,9 +416,10 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
                     className="mt-4 p-4 min-h-[120px] border-2 border-dashed border-primary/50 rounded-md flex flex-col items-center justify-center gap-2 text-muted-foreground"
                 >
                     {droppedItems.length > 0 ? (
-                        droppedItems.map(item => (
-                            <Badge key={item} variant="secondary" className="text-base py-1 px-3 font-extrabold">{item}</Badge>
-                        ))
+                        droppedItems.map(item => {
+                            const optionText = scenario.options?.find(opt => opt.value === item)?.text || item;
+                            return <Badge key={item} variant="secondary" className="text-base py-1 px-3 font-extrabold">{optionText}</Badge>
+                        })
                     ) : (
                         <p>Drop two thoughts here</p>
                     )}
@@ -456,7 +456,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
                      {isRecording ? 'Stop' : isTranscribing ? 'Transcribing...' : 'Record'}
                   </Button>
                   <Button type="submit" disabled={isLoading} className="font-extrabold">
-                  {isSubmitting ? (
+                  {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                   ) : currentScenario === scenarios.length - 1 ? 'Finish & See Results' : 'Submit'}
                   </Button>
@@ -475,7 +475,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
             <div className="flex flex-col gap-4">
               {scenario.options.map(option => (
                 <Button 
-                  key={option.text}
+                  key={option.value}
                   onClick={() => handleChoiceClick(option.value)}
                   disabled={isLoading}
                   size="lg"
@@ -496,7 +496,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
                     disabled={isLoading} 
                     className="font-extrabold"
                   >
-                    {isSubmitting ? (
+                    {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : currentScenario === scenarios.length - 1 ? 'Finish & See Results' : 'Submit'}
                 </Button>
