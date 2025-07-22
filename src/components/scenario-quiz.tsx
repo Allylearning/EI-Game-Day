@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { getFinalScore } from '@/lib/helpers';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   currentAnswer: z.string().min(1, 'Please describe your reaction.'),
@@ -77,6 +78,9 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
   // Interaction state
   const [droppedItems, setDroppedItems] = useState<string[]>([]);
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  
+  // Animation state
+  const [scoreChanged, setScoreChanged] = useState<'for' | 'against' | null>(null);
   
   // Audio recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -156,6 +160,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
     if (scenario.isMandatoryConcede) {
         const hasConceded = matchEvents.some(event => event.minute === scenario.minute && event.scoreChange < 0);
         if (!hasConceded) {
+            setScoreChanged('against');
             setMatchEvents(prevEvents => [
                 ...prevEvents,
                 {
@@ -242,6 +247,10 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
     setAllAnswers(updatedAnswers);
     
     const scoreChange = getScoreChange(scenario.minute, currentAnswer);
+
+    if (scoreChange > 0) setScoreChanged('for');
+    if (scoreChange < 0) setScoreChanged('against');
+
     const newEvent: MatchEvent = {
         minute: scenario.minute,
         outcome: `Action at minute ${scenario.minute}.`, // Placeholder outcome
@@ -263,6 +272,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
      setDroppedItems([]);
      setSelectedChoice(null);
      hasSubmittedRef.current = false;
+     setScoreChanged(null);
      
      const answersToSubmit = finalAnswers || allAnswers;
 
@@ -362,7 +372,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
          <div className="flex items-center justify-between text-lg font-headline mb-4">
              <div className="flex items-center gap-2">
                  <Badge variant="secondary" className="font-extrabold">YOU</Badge>
-                 <span className='text-2xl text-primary font-extrabold'>{score.goalsFor}</span>
+                 <span className={cn('text-2xl text-primary font-extrabold', { 'animate-shake text-green-400': scoreChanged === 'for' })}>{score.goalsFor}</span>
              </div>
              <div className='flex flex-col items-center justify-center min-h-[50px]'>
                 <div className="flex items-center gap-2 font-headline text-primary">
@@ -371,7 +381,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
                 </div>
              </div>
              <div className="flex items-center gap-2">
-                 <span className='text-2xl text-muted-foreground font-extrabold'>{score.goalsAgainst}</span>
+                 <span className={cn('text-2xl text-muted-foreground font-extrabold', { 'animate-shake text-red-400': scoreChanged === 'against' })}>{score.goalsAgainst}</span>
                  <Badge variant="outline" className="font-extrabold">OPP</Badge>
              </div>
          </div>

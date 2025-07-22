@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -96,20 +97,30 @@ export default {
           '100%': { 'background-position': '200% 0' },
         },
         'scale-in': {
-          '0%': { opacity: '0', transform: 'scale(0.9)' },
+          '0%': { opacity: '0.8', transform: 'scale(0.9)' },
+          '50%': { opacity: '1', transform: 'scale(1.25)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
         'fade-in': {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
-        }
+        },
+        'shake': {
+            '0%': { transform: 'scale(1) translate3d(0, 0, 0)' },
+            '10%, 90%': { transform: 'scale(1.1) translate3d(-1px, 0, 0)' },
+            '20%, 80%': { transform: 'scale(1.3) translate3d(2px, 0, 0)' },
+            '30%, 50%, 70%': { transform: 'scale(1.5) translate3d(-4px, 0, 0)' },
+            '40%, 60%': { transform: 'scale(1.5) translate3d(4px, 0, 0)' },
+            '100%': { transform: 'scale(1) translate3d(0, 0, 0)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'card-shine': 'card-shine 3s infinite linear',
-        'scale-in': 'scale-in 0.5s ease-out forwards',
+        'scale-in': 'scale-in 0.4s ease-out forwards',
         'fade-in': 'fade-in 0.5s ease-out forwards',
+        'shake': 'shake 0.82s cubic-bezier(.36,.07,.19,.97) both',
       },
     },
   },
