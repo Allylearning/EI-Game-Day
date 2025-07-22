@@ -73,7 +73,7 @@ export default function PreMatchForm({ onSubmit }: PreMatchFormProps) {
     <div className="flex flex-col items-center text-center gap-6">
       <h1 className="font-headline text-3xl sm:text-4xl font-extrabold text-primary">Game Day</h1>
       <p className="text-muted-foreground">
-        Test your emotional intelligence in 6 critical match-day scenarios. Get your official player card and see how you rank.
+        Test your emotional intelligence in 6 critical game-day scenarios. Get your official player card and see which real life player matches your play style.
       </p>
       
       <div className="w-full flex flex-col items-center gap-4">

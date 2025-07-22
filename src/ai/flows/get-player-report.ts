@@ -68,6 +68,7 @@ Third, based on the position and the EQ scores, provide a comparison to a real-w
 - A CF with high confidence and focus could be compared to Erling Haaland.
 - A CB with high resilience and focus could be compared to Virgil van Dijk.
 - An AM with high patience and creativity could be compared to Martin Ødegaard.
+Please only use players who are currently active in the Premier League or Championship.
 
 Here are the player's answers to the scenarios:
 Scenario 1 (Not starting): {{{scenario1}}}
