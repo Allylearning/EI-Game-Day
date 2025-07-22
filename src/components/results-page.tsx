@@ -10,7 +10,7 @@ import Leaderboard from './leaderboard';
 import { Download, Share2, RefreshCw, Mail, AlertTriangle } from 'lucide-react';
 import type { UserData, QuizResult } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getHighestStat, statTitles, getFinalScore, getOverallScore } from '@/lib/helpers';
+import { getHighestStat, getFinalScore, getOverallScore } from '@/lib/helpers';
 import { statIcons, Logo } from '@/components/icons';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -25,9 +25,8 @@ export default function ResultsPage({ userData, quizResult, onRestart }: Results
   const { toast } = useToast();
   const [isDownloading, startDownloadTransition] = useTransition();
 
-  const { eqScores, matchEvents, isFallback } = quizResult;
+  const { eqScores, matchEvents, isFallback, playerComparison } = quizResult;
   const highestStat = getHighestStat(eqScores);
-  const title = statTitles[highestStat];
   const HighestStatIcon = statIcons[highestStat];
 
   const handleDownload = () => {
@@ -57,7 +56,7 @@ export default function ResultsPage({ userData, quizResult, onRestart }: Results
     const overallScore = getOverallScore(eqScores);
     const finalScore = getFinalScore(matchEvents);
     const shareUrl = window.location.href;
-    const shareText = `I just scored ${finalScore.goalsFor}-${finalScore.goalsAgainst} (EQ: ${overallScore}) on Game Day! My position is ${quizResult.position}. Think you can do better? Try it yourself:`;
+    const shareText = `I just scored ${overallScore}) on Game Day! My player comparison is ${playerComparison}. Think you can do better? Try it yourself:`;
     const fullMessage = `${shareText} ${shareUrl}`;
 
     if (navigator.share) {
@@ -114,13 +113,15 @@ export default function ResultsPage({ userData, quizResult, onRestart }: Results
         </TabsList>
         <TabsContent value="card" className="w-full max-w-md flex flex-col items-center mt-6 gap-6">
             <PlayerCard ref={cardRef} userData={userData} quizResult={quizResult} />
-            <Alert>
-                <HighestStatIcon className="h-4 w-4" />
-                <AlertTitle className="font-extrabold">You are {title}!</AlertTitle>
-                <AlertDescription>
-                    This title is awarded because your highest score was in <span className="font-bold capitalize">{highestStat}</span>. Your answers showed a strong ability in this area.
-                </AlertDescription>
-            </Alert>
+            {!isFallback && (
+              <Alert>
+                  <HighestStatIcon className="h-4 w-4" />
+                  <AlertTitle className="font-extrabold">Player Comparison: {playerComparison}</AlertTitle>
+                  <AlertDescription>
+                      You were compared to {playerComparison} because your highest EQ score was in <span className="font-bold capitalize">{highestStat}</span>, a key trait for this player.
+                  </AlertDescription>
+              </Alert>
+            )}
         </TabsContent>
         <TabsContent value="leaderboard" className="w-full mt-6">
           <Leaderboard />

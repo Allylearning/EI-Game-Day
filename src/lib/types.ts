@@ -23,6 +23,7 @@ export type QuizResult = {
   eqScores: EqScores;
   matchEvents: MatchEvent[];
   position: string;
+  playerComparison: string;
   isFallback?: boolean; // Optional flag for fallback results
 };
 

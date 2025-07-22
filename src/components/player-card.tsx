@@ -4,7 +4,7 @@
 import Image from 'next/image';
 import { Progress } from '@/components/ui/progress';
 import { statIcons } from '@/components/icons';
-import { getHighestStat, getOverallScore, statTitles, getFinalScore } from '@/lib/helpers';
+import { getOverallScore, statTitles, getFinalScore } from '@/lib/helpers';
 import type { UserData, EqScores, StatName, MatchEvent, QuizResult } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import React, { useState, useRef } from 'react';
@@ -33,10 +33,8 @@ const StatRow = ({ name, score }: { name: StatName; score: number }) => {
 
 const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
   ({ userData, quizResult, className }, ref) => {
-    const { eqScores, matchEvents, position } = quizResult;
+    const { eqScores, matchEvents, position, playerComparison } = quizResult;
     const overallScore = getOverallScore(eqScores);
-    const highestStat = getHighestStat(eqScores);
-    const title = statTitles[highestStat];
     const stats = Object.entries(eqScores) as [StatName, number][];
     const finalScore = getFinalScore(matchEvents);
 
@@ -130,7 +128,7 @@ const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
                {/* Name, Title, and Score */}
               <div className="relative z-10 text-center mb-4">
                 <h3 className="font-headline text-4xl font-extrabold truncate drop-shadow-lg">{userData.name}</h3>
-                <p className="text-primary font-semibold text-xl drop-shadow-md">{title}</p>
+                <p className="text-primary font-semibold text-xl drop-shadow-md">{playerComparison}</p>
                  <div className="flex justify-center items-center gap-4 mt-2 text-2xl font-headline drop-shadow-md font-extrabold">
                     <span className='text-green-400'>{finalScore.goalsFor}</span>
                     <span>-</span>

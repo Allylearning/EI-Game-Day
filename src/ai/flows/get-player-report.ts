@@ -31,6 +31,7 @@ const GetPlayerReportOutputSchema = z.object({
     confidence: z.number().describe('Score for confidence (0-100).'),
   }),
   position: z.string().describe("The assigned player position abbreviation (e.g., 'CM', 'GK', 'ST')."),
+  playerComparison: z.string().describe("The name of a real-world player who has similar skills."),
 });
 export type GetPlayerReportOutput = z.infer<typeof GetPlayerReportOutputSchema>;
 
@@ -52,6 +53,7 @@ First, score the player's answers based on six emotional intelligence categories
 - Teamwork: Willingness to collaborate and support team goals.
 - Confidence: Self-belief and assertiveness in high-stakes situations.
 Each score should be between 0 and 100.
+Be sure to use the full range of scores; for answers that perfectly exemplify a trait, award a score of 95 or higher.
 Second, based on the EQ scores you just calculated, assign a single football position abbreviation to the player.
 Here are the available position abbreviations: GK, CB, FB, WB, DM, CM, WM, AM, WF, CF.
 Use this mapping of EQ skills to positions as a guide:
@@ -61,6 +63,12 @@ Use this mapping of EQ skills to positions as a guide:
 - High Confidence and Focus: Perfect for attackers who need to be decisive. Suggests CF or WF.
 - A balanced profile might suggest versatile roles like FB, WB, or WM.
 
+Third, based on the position and the EQ scores, provide a comparison to a real-world player known for similar qualities. For example:
+- A CM with high teamwork and empathy could be compared to Kevin De Bruyne.
+- A CF with high confidence and focus could be compared to Erling Haaland.
+- A CB with high resilience and focus could be compared to Virgil van Dijk.
+- An AM with high patience and creativity could be compared to Martin Ødegaard.
+
 Here are the player's answers to the scenarios:
 Scenario 1 (Not starting): {{{scenario1}}}
 Scenario 2 (One-on-one): {{{scenario2}}}
@@ -69,7 +77,7 @@ Scenario 4 (Halftime talk): {{{scenario4}}}
 Scenario 5 (Defender mistake): {{{scenario5}}}
 Scenario 6 (Final shot decision): {{{scenario6}}}
 
-Provide your full analysis as a single JSON object containing both the eqScores object and the position string.`,
+Provide your full analysis as a single JSON object containing the eqScores, position, and playerComparison.`,
 });
 
 const getPlayerReportFlow = ai.defineFlow(

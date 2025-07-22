@@ -93,19 +93,20 @@ export async function gradeAllAnswersAction(
     const overallScore = getOverallScore(playerReport.eqScores);
 
     if (userData.leaderboardOptIn) {
-      await addPlayerScore({
-        name: userData.name,
-        club: userData.club,
-        score: overallScore,
-        selfie: userData.selfie,
-      });
-    }
+          addPlayerScore({
+            name: userData.name,
+            club: userData.club,
+            score: overallScore,
+            selfie: userData.selfie,
+          });
+        }
 
-    const finalData: QuizResult = {
-      eqScores: playerReport.eqScores,
-      matchEvents: events,
-      position: playerReport.position,
-    };
+        const finalData: QuizResult = {
+          eqScores: playerReport.eqScores,
+          matchEvents: events,
+          position: playerReport.position,
+          playerComparison: playerReport.playerComparison,
+        };
 
     return { success: true, data: finalData };
   } catch (error) {
@@ -122,6 +123,7 @@ export async function gradeAllAnswersAction(
         },
         matchEvents: events,
         position: 'CM',
+        playerComparison: 'Luka Modric', // A safe, well-rounded fallback
         isFallback: true, // Add a flag to indicate this is fallback data
     };
     return { success: false, data: fallbackData, error: 'Failed to get AI-powered report. Displaying match result only.' };
