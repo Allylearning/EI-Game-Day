@@ -26,12 +26,13 @@ async function sendToCrmAction(data: { name: string; email: string; club?: strin
     console.log('--- CRM Submission Ended ---');
     return;
   }
+  
+  const fullEndpointUrl = `${crmEndpoint}/${crmMarketingListId}/contact`;
 
   const payload = {
     name,
     email,
     club: club || 'N/A',
-    marketingListId: crmMarketingListId,
   };
 
   const headers = {
@@ -40,7 +41,7 @@ async function sendToCrmAction(data: { name: string; email: string; club?: strin
     'X-Api-Secret': crmApiSecret,
   };
 
-  console.log('Sending to Endpoint:', crmEndpoint);
+  console.log('Sending to Endpoint:', fullEndpointUrl);
   console.log('Request Headers:', {
     ...headers,
     'X-Api-Secret': '********', // Mask secret in logs
@@ -48,7 +49,7 @@ async function sendToCrmAction(data: { name: string; email: string; club?: strin
   console.log('Request Payload:', JSON.stringify(payload, null, 2));
 
   try {
-    const response = await fetch(crmEndpoint, {
+    const response = await fetch(fullEndpointUrl, {
       method: 'POST',
       headers: headers,
       body: JSON.stringify(payload),
@@ -93,20 +94,20 @@ export async function gradeAllAnswersAction(
     const overallScore = getOverallScore(playerReport.eqScores);
 
     if (userData.leaderboardOptIn) {
-          addPlayerScore({
-            name: userData.name,
-            club: userData.club,
-            score: overallScore,
-            selfie: userData.selfie,
-          });
-        }
+      await addPlayerScore({
+        name: userData.name,
+        club: userData.club,
+        score: overallScore,
+        selfie: userData.selfie,
+      });
+    }
 
-        const finalData: QuizResult = {
-          eqScores: playerReport.eqScores,
-          matchEvents: events,
-          position: playerReport.position,
-          playerComparison: playerReport.playerComparison,
-        };
+    const finalData: QuizResult = {
+      eqScores: playerReport.eqScores,
+      matchEvents: events,
+      position: playerReport.position,
+      playerComparison: playerReport.playerComparison,
+    };
 
     return { success: true, data: finalData };
   } catch (error) {
