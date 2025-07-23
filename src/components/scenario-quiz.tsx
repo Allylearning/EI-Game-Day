@@ -370,13 +370,13 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
         <Avatar className="h-10 w-10 border-2 border-primary/50">
             <AvatarImage 
               src={userData.selfie} 
-              alt={userData.name} 
+              alt={`${userData.firstName} ${userData.lastName}`}
               style={{ 
                 objectFit: 'cover',
                 objectPosition: `${userData.selfiePosition.x}% ${userData.selfiePosition.y}%` 
               }} 
             />
-            <AvatarFallback>{userData.name.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{userData.firstName.charAt(0)}</AvatarFallback>
         </Avatar>
         <Progress value={progress} className="w-full" />
       </div>

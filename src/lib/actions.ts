@@ -7,7 +7,7 @@ import type { MatchEvent, QuizResult, UserData } from './types';
 import { addPlayerScore } from './db';
 import { getOverallScore } from './helpers';
 
-async function sendToCrmAction(data: { name: string; email: string; club?: string }) {
+async function sendToCrmAction(data: { name: string; email: string; club: string }) {
   console.log('--- Starting Zapier Webhook Submission ---');
   
   const { name, email, club } = data;
@@ -59,9 +59,11 @@ export async function gradeAllAnswersAction(
   {answers, events, userData}: {answers: Record<string, string>, events: MatchEvent[], userData: UserData}
 ): Promise<{ success: boolean; data: QuizResult; error?: string }> {
   try {
+    const fullName = `${userData.firstName} ${userData.lastName}`;
+    
     // Fire off the CRM submission. We don't wait for it to complete
     // so it doesn't slow down the user experience.
-    sendToCrmAction({ name: userData.name, email: userData.email, club: userData.club });
+    sendToCrmAction({ name: fullName, email: userData.email, club: userData.club });
 
     const reportInput: GetPlayerReportInput = {
       scenario1: answers['scenario1'] || 'No answer provided.',
@@ -78,7 +80,7 @@ export async function gradeAllAnswersAction(
 
     if (userData.leaderboardOptIn) {
       await addPlayerScore({
-        name: userData.name,
+        name: fullName,
         club: userData.club,
         score: overallScore,
         selfie: userData.selfie,

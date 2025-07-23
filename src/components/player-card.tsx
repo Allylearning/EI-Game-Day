@@ -79,6 +79,8 @@ const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
             opacity: 0
         });
     };
+    
+    const fullName = `${userData.firstName} ${userData.lastName}`;
 
     return (
       <div ref={ref}>
@@ -97,7 +99,7 @@ const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
           {/* Selfie Image as full background */}
           <Image
             src={userData.selfie}
-            alt={`${userData.name}'s player card`}
+            alt={`${fullName}'s player card`}
             layout="fill"
             objectFit="cover"
             style={{ objectPosition: `${userData.selfiePosition.x}% ${userData.selfiePosition.y}%` }}
@@ -127,7 +129,7 @@ const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
             <div className='flex-grow flex flex-col justify-end' style={{ transform: 'translateZ(20px)' }}>
                {/* Name, Title, and Score */}
               <div className="relative z-10 text-center mb-4">
-                <h3 className="font-headline text-4xl font-extrabold truncate drop-shadow-lg">{userData.name}</h3>
+                <h3 className="font-headline text-4xl font-extrabold truncate drop-shadow-lg">{fullName}</h3>
                 <p className="text-primary font-semibold text-xl drop-shadow-md">{playerComparison}</p>
                  <div className="flex justify-center items-center gap-4 mt-2 text-2xl font-headline drop-shadow-md font-extrabold">
                     <span className='text-green-400'>{finalScore.goalsFor}</span>

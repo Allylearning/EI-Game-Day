@@ -1,9 +1,10 @@
 import type { GetPlayerReportOutput } from "@/ai/flows/get-player-report";
 
 export type UserData = {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  club?: string;
+  club: string;
   selfie: string; // Will store as a data URL
   selfiePosition: { x: number; y: number };
   leaderboardOptIn: boolean;

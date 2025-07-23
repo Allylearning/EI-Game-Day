@@ -29,7 +29,7 @@ export const scenarios = [
     text: "After you lose the ball, a teammate shouts at you. You feel a flash of anger and embarrassment.",
     description: "What's your immediate reaction?",
     interaction: "choice",
-    timer: 15,
+    timer: 30,
     options: [
       {
         icon: "😡",
@@ -66,7 +66,7 @@ export const scenarios = [
     text: "Your left backs’ been caught ball watching and looks rattled. The ball’s loose and an opponent is pressing hard.",
     description: "What do you do?",
     interaction: "choice",
-    timer: 15,
+    timer: 30,
     options: [
         {
             icon: "🗣️",
@@ -94,7 +94,7 @@ export const scenarios = [
     text: "The last minutes of the game. In added time, the ball breaks to you on the edge of the box. You could shoot, but a teammate is in a better position. You only have a second to decide.",
     description: "What do you do — and what made you choose that?",
     interaction: "choice",
-    timer: 15,
+    timer: 30,
     options: [
       {
         icon: "⚽️",

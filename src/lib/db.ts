@@ -52,7 +52,7 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
 // This is a placeholder, you'll need to call this after a quiz is completed.
 export async function addPlayerScore(playerData: {
   name: string;
-  club?: string;
+  club: string;
   score: number;
   selfie?: string;
 }) {
