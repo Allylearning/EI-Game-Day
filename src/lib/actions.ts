@@ -7,10 +7,10 @@ import type { MatchEvent, QuizResult, UserData } from './types';
 import { addPlayerScore } from './db';
 import { getOverallScore } from './helpers';
 
-async function sendToCrmAction(data: { name: string; email: string; club: string }) {
+async function sendToCrmAction(data: { firstName: string; lastName: string; email: string; club: string }) {
   console.log('--- Starting Zapier Webhook Submission ---');
   
-  const { name, email, club } = data;
+  const { firstName, lastName, email, club } = data;
   const zapierWebhookUrl = process.env.ZAPIER_WEBHOOK_URL;
 
   if (!zapierWebhookUrl) {
@@ -20,7 +20,8 @@ async function sendToCrmAction(data: { name: string; email: string; club: string
   }
 
   const payload = {
-    name,
+    firstName,
+    lastName,
     email,
     club: club || 'N/A',
   };
@@ -63,7 +64,12 @@ export async function gradeAllAnswersAction(
     
     // Fire off the CRM submission. We don't wait for it to complete
     // so it doesn't slow down the user experience.
-    sendToCrmAction({ name: fullName, email: userData.email, club: userData.club });
+    sendToCrmAction({ 
+      firstName: userData.firstName, 
+      lastName: userData.lastName, 
+      email: userData.email, 
+      club: userData.club 
+    });
 
     const reportInput: GetPlayerReportInput = {
       scenario1: answers['scenario1'] || 'No answer provided.',
