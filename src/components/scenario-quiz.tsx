@@ -467,7 +467,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
                         variant={isSelected ? "default" : "secondary"}
                         onClick={() => handleMobileChoice(option.value)}
                         disabled={!isSelected && droppedItems.length >= 2}
-                        className="h-auto py-3 text-left justify-start"
+                        className="h-auto py-3 text-left justify-start whitespace-normal"
                       >
                         {option.text}
                       </Button>

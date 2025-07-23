@@ -4,7 +4,6 @@ export const scenarios = [
     id: 1, 
     minute: 0, 
     text: "The Gaffer just said you’re not in the starting eleven. You really wanted to be out there. You feel annoyed and left out watching from the bench.",
-    description: "Drag your two primary thoughts into the box.",
     interaction: "drag-and-drop",
     commentary: "A tough decision for the coach, but your mindset now is key. Staying positive and ready can make all the difference when you get your chance.",
     options: [
