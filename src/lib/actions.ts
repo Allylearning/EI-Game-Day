@@ -14,20 +14,19 @@ async function sendToCrmAction(data: { name: string; email: string; club?: strin
   const crmEndpoint = process.env.FORCE24_API_ENDPOINT;
   const crmApiKey = process.env.FORCE24_API_KEY;
   const crmApiSecret = process.env.FORCE24_API_SECRET;
-  const crmMarketingListId = process.env.FORCE24_MARKETING_LIST_ID;
 
-  if (!crmEndpoint || !crmApiKey || !crmApiSecret || !crmMarketingListId) {
+  if (!crmEndpoint || !crmApiKey || !crmApiSecret) {
     console.error('CRM Configuration Error: One or more environment variables are missing.');
     console.log('FORCE24_API_ENDPOINT:', crmEndpoint ? 'Loaded' : 'Missing');
     console.log('FORCE24_API_KEY:', crmApiKey ? 'Loaded' : 'Missing');
     console.log('FORCE24_API_SECRET:', crmApiSecret ? 'Loaded' : 'Missing');
-    console.log('FORCE24_MARKETING_LIST_ID:', crmMarketingListId ? 'Loaded' : 'Missing');
     console.log('Skipping CRM submission.');
     console.log('--- CRM Submission Ended ---');
     return;
   }
   
-  const fullEndpointUrl = `${crmEndpoint}/${crmMarketingListId}/contact`;
+  // The endpoint for creating a contact directly.
+  const fullEndpointUrl = `${crmEndpoint}/contact`;
 
   const payload = {
     name,
@@ -76,9 +75,8 @@ export async function gradeAllAnswersAction(
   {answers, events, userData}: {answers: Record<string, string>, events: MatchEvent[], userData: UserData}
 ): Promise<{ success: boolean; data: QuizResult; error?: string }> {
   try {
-    // Fire off the CRM submission. We don't wait for it to complete
-    // so it doesn't slow down the user experience.
-    sendToCrmAction({ name: userData.name, email: userData.email, club: userData.club });
+    // Fire off the CRM submission. Await it to ensure logs/errors appear before function completes.
+    await sendToCrmAction({ name: userData.name, email: userData.email, club: userData.club });
 
     const reportInput: GetPlayerReportInput = {
       scenario1: answers['scenario1'] || 'No answer provided.',
