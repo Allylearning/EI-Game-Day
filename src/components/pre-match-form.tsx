@@ -18,9 +18,10 @@ import { Checkbox } from './ui/checkbox';
 import Link from 'next/link';
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
+  firstName: z.string().min(2, { message: 'First name must be at least 2 characters.' }),
+  lastName: z.string().min(2, { message: 'Last name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email.' }),
-  club: z.string().optional(),
+  club: z.string().min(1, { message: 'Organisation is required.' }),
   leaderboardOptIn: z.boolean().default(false),
 });
 
@@ -35,7 +36,7 @@ export default function PreMatchForm({ onSubmit }: PreMatchFormProps) {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: '', email: '', club: '', leaderboardOptIn: false },
+    defaultValues: { firstName: '', lastName: '', email: '', club: '', leaderboardOptIn: false },
   });
 
   const handleSelfieUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +74,7 @@ export default function PreMatchForm({ onSubmit }: PreMatchFormProps) {
     <div className="flex flex-col items-center text-center gap-6">
       <h1 className="font-headline text-3xl sm:text-4xl font-extrabold text-primary">Game Day</h1>
       <p className="text-muted-foreground">
-        Test your emotional intelligence in 6 critical game-day scenarios. Get your official player card and see which real life player matches your play style.
+        Test your emotional intelligence in 6 critical match-day scenarios. Get your official player card and see how you rank.
       </p>
       
       <div className="w-full flex flex-col items-center gap-4">
@@ -124,37 +125,50 @@ export default function PreMatchForm({ onSubmit }: PreMatchFormProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="name"
+              name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-extrabold">Player Name</FormLabel>
+                  <FormLabel className="font-extrabold">First Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your Name" {...field} />
+                    <Input placeholder="Your First Name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
+             <FormField
               control={form.control}
-              name="email"
+              name="lastName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-extrabold">Email</FormLabel>
+                  <FormLabel className="font-extrabold">Last Name</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="your@email.com" {...field} />
+                    <Input placeholder="Your Last Name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-extrabold">Email</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="your@email.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
            <FormField
             control={form.control}
             name="club"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-extrabold">Club / Organisation (Optional)</FormLabel>
+                <FormLabel className="font-extrabold">Club / Organisation</FormLabel>
                 <FormControl>
                   <Input placeholder="Your Team" {...field} />
                 </FormControl>
