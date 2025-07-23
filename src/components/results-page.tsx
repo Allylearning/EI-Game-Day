@@ -23,26 +23,40 @@ type ResultsPageProps = {
 export default function ResultsPage({ userData, quizResult, onRestart }: ResultsPageProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const [isDownloading, startDownloadTransition] = useTransition();
+  const [isProcessing, startProcessingTransition] = useTransition();
 
   const { eqScores, matchEvents, isFallback, playerComparison } = quizResult;
   const highestStat = getHighestStat(eqScores);
   const HighestStatIcon = statIcons[highestStat];
 
+  const generateCardImage = async (pixelRatio: number = 2): Promise<Blob | null> => {
+    if (!cardRef.current) return null;
+    try {
+        const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio });
+        const blob = await (await fetch(dataUrl)).blob();
+        return blob;
+    } catch (err) {
+        console.error('Failed to generate card image', err);
+        return null;
+    }
+  };
+
+
   const handleDownload = () => {
-    if (!cardRef.current) return;
-    startDownloadTransition(async () => {
-      try {
-        const dataUrl = await toPng(cardRef.current!, { cacheBust: true, pixelRatio: 2 });
+    startProcessingTransition(async () => {
+      const blob = await generateCardImage();
+      if (blob) {
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.download = `gameday-player-card-${userData.name.toLowerCase().replace(/ /g, '-')}.png`;
-        link.href = dataUrl;
+        link.href = url;
         link.click();
+        URL.revokeObjectURL(url);
         toast({
           title: 'Download Started',
           description: 'Your player card is being downloaded.',
         });
-      } catch (err) {
+      } else {
         toast({
           title: 'Download Failed',
           description: 'Could not download the player card. Please try again.',
@@ -53,42 +67,46 @@ export default function ResultsPage({ userData, quizResult, onRestart }: Results
   };
 
   const handleShare = async () => {
-    const overallScore = getOverallScore(eqScores);
-    const finalScore = getFinalScore(matchEvents);
-    const shareUrl = window.location.href;
-    const shareText = `I just scored ${overallScore} on Game Day! My player comparison is ${playerComparison}. Think you can do better? Try it yourself:`;
-    const fullMessage = `${shareText} ${shareUrl}`;
+     startProcessingTransition(async () => {
+        const overallScore = getOverallScore(eqScores);
+        const finalScore = getFinalScore(matchEvents);
+        const shareUrl = window.location.href;
+        const shareText = `I just scored ${overallScore} on Game Day! My player comparison is ${playerComparison}. Think you can do better? Try it yourself:`;
+        const fullMessage = `${shareText} ${shareUrl}`;
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'My Game Day Results!',
-          text: shareText,
-          url: shareUrl,
-        });
-        toast({
-          title: 'Shared successfully!',
-        });
-      } catch (error) {
-        // This can happen if the user cancels the share dialog, so we don't show an error.
-        console.info('Share was cancelled or failed', error);
-      }
-    } else {
-      // Fallback for browsers that do not support the Web Share API (e.g., desktop)
-      try {
-        await navigator.clipboard.writeText(fullMessage);
-        toast({
-          title: 'Link Copied!',
-          description: 'Your results message has been copied to the clipboard.',
-        });
-      } catch (err) {
-        toast({
-          title: 'Copy Failed',
-          description: 'Could not copy the results to your clipboard.',
-          variant: 'destructive',
-        });
-      }
-    }
+        const imageBlob = await generateCardImage(1); // Use lower resolution for sharing
+        
+        // Use Web Share API if available, especially for sharing files
+        if (imageBlob && navigator.canShare && navigator.canShare({ files: [new File([imageBlob], 'card.png', { type: 'image/png' })] })) {
+            const file = new File([imageBlob], `gameday-card-${userData.name}.png`, { type: 'image/png' });
+            try {
+                await navigator.share({
+                    title: 'My Game Day Results!',
+                    text: shareText,
+                    url: shareUrl,
+                    files: [file],
+                });
+                toast({ title: 'Shared successfully!' });
+            } catch (error) {
+                 console.info('Share was cancelled or failed', error);
+            }
+        } else {
+            // Fallback for browsers that do not support the Web Share API or file sharing
+            try {
+                await navigator.clipboard.writeText(fullMessage);
+                toast({
+                title: 'Link Copied!',
+                description: 'Your results message has been copied to the clipboard.',
+                });
+            } catch (err) {
+                toast({
+                title: 'Copy Failed',
+                description: 'Could not copy the results to your clipboard.',
+                variant: 'destructive',
+                });
+            }
+        }
+     });
   };
 
 
@@ -129,13 +147,13 @@ export default function ResultsPage({ userData, quizResult, onRestart }: Results
       </Tabs>
 
       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-        <Button onClick={handleDownload} disabled={isDownloading} className="flex-1 font-extrabold">
+        <Button onClick={handleDownload} disabled={isProcessing} className="flex-1 font-extrabold">
           <Download className="mr-2 h-4 w-4" />
-          {isDownloading ? 'Downloading...' : 'Download Card'}
+          {isProcessing ? 'Processing...' : 'Download Card'}
         </Button>
-        <Button onClick={handleShare} variant="outline" className="flex-1 font-extrabold">
+        <Button onClick={handleShare} variant="outline" className="flex-1 font-extrabold" disabled={isProcessing}>
           <Share2 className="mr-2 h-4 w-4" />
-          Share Results
+          {isProcessing ? 'Processing...' : 'Share Results'}
         </Button>
       </div>
        <Button onClick={onRestart} variant="ghost" className="mt-4 font-extrabold">

@@ -29,6 +29,11 @@ export default function Home() {
     // Show confetti for everyone on completion.
     // Add a small timeout to ensure the confetti component has time to mount.
     setTimeout(() => showConfetti(true), 100);
+    
+    // Send completion message to parent window if embedded
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage('complete', '*');
+    }
   };
 
   const handleRestart = () => {

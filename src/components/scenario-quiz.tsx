@@ -19,6 +19,7 @@ import { getFinalScore } from '@/lib/helpers';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const formSchema = z.object({
   currentAnswer: z.string().min(1, 'Please describe your reaction.'),
@@ -89,6 +90,8 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
   const audioChunksRef = useRef<Blob[]>([]);
 
   const { toast } = useToast();
+  const isMobile = useIsMobile();
+
 
   const form = useForm<{ currentAnswer: string }>({
     resolver: zodResolver(formSchema),
@@ -319,6 +322,16 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
     e.preventDefault();
   };
 
+    const handleMobileChoice = (item: string) => {
+    if (droppedItems.includes(item)) {
+      // Deselect
+      setDroppedItems(droppedItems.filter(i => i !== item));
+    } else if (droppedItems.length < 2) {
+      // Select
+      setDroppedItems([...droppedItems, item]);
+    }
+  };
+
 
   const progress = ((currentScenario + 1) / scenarios.length) * 100;
   const currentMinute = scenario.minute;
@@ -406,37 +419,75 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
         <>
           {scenario.interaction === 'drag-and-drop' && scenario.options && (
             <div className="flex flex-col gap-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {scenario.options
-                        .filter(opt => !droppedItems.includes(opt.value))
-                        .map(option => (
-                        <div
-                            key={option.value}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, option.value)}
-                            className="p-3 bg-muted rounded-md cursor-grab active:cursor-grabbing"
-                        >
-                            {option.text}
-                        </div>
-                    ))}
-                </div>
-                <div 
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    className="mt-4 p-4 min-h-[120px] border-2 border-dashed border-primary/50 rounded-md flex flex-col items-center justify-center gap-2 text-muted-foreground"
+              {/* This is the thoughts box - it's the same for mobile and desktop */}
+               <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  className="p-4 min-h-[120px] border-2 border-dashed border-primary/50 rounded-md flex flex-col items-center justify-center gap-2 text-muted-foreground"
                 >
-                    {droppedItems.length > 0 ? (
-                        droppedItems.map(item => {
-                            const optionText = scenario.options?.find(opt => opt.value === item)?.text || item;
-                            return <Badge key={item} variant="secondary" className="text-base py-1 px-3 font-extrabold">{optionText}</Badge>
-                        })
-                    ) : (
-                        <p>Drop two thoughts here</p>
-                    )}
-                     {droppedItems.length > 0 && droppedItems.length < 2 && (
-                         <p className='text-sm'>Drop one more thought</p>
-                     )}
+                  {droppedItems.length > 0 ? (
+                    droppedItems.map(item => {
+                      const optionText = scenario.options?.find(opt => opt.value === item)?.text || item;
+                      // On mobile, these badges are clickable to de-select
+                      return isMobile ? (
+                        <Badge
+                          key={item}
+                          variant="secondary"
+                          className="text-base py-1 px-3 font-extrabold cursor-pointer"
+                          onClick={() => handleMobileChoice(item)}
+                        >
+                          {optionText} &times;
+                        </Badge>
+                      ) : (
+                        <Badge key={item} variant="secondary" className="text-base py-1 px-3 font-extrabold">
+                          {optionText}
+                        </Badge>
+                      );
+                    })
+                  ) : (
+                    <p>
+                      {isMobile ? 'Tap two thoughts below' : 'Drop two thoughts here'}
+                    </p>
+                  )}
+                  {droppedItems.length > 0 && droppedItems.length < 2 && (
+                    <p className="text-sm">
+                      {isMobile ? 'Tap one more thought' : 'Drop one more thought'}
+                    </p>
+                  )}
                 </div>
+
+              {/* The options list is rendered differently on mobile vs desktop */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {scenario.options.map(option => {
+                  const isSelected = droppedItems.includes(option.value);
+                  if (isMobile) {
+                    return (
+                      <Button
+                        key={option.value}
+                        variant={isSelected ? "default" : "secondary"}
+                        onClick={() => handleMobileChoice(option.value)}
+                        disabled={!isSelected && droppedItems.length >= 2}
+                        className="h-auto py-3 text-left justify-start"
+                      >
+                        {option.text}
+                      </Button>
+                    );
+                  } else {
+                    // Desktop drag-and-drop view
+                    if (isSelected) return null; // Don't show draggable item if it's already dropped
+                    return (
+                      <div
+                        key={option.value}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, option.value)}
+                        className="p-3 bg-muted rounded-md cursor-grab active:cursor-grabbing"
+                      >
+                        {option.text}
+                      </div>
+                    );
+                  }
+                })}
+              </div>
             </div>
           )}
         
