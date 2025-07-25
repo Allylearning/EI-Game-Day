@@ -92,22 +92,8 @@ export const scenarios = [
     id: 6, 
     minute: 90+3, 
     text: "The last minutes of the game. In added time, the ball breaks to you on the edge of the box. You could shoot, but a teammate is in a better position. You only have a second to decide.",
-    description: "What do you do — and what made you choose that?",
-    interaction: "choice",
-    timer: 30,
-    options: [
-      {
-        icon: "⚽️",
-        text: "Take the shot myself.",
-        value: "I take the shot myself, I know I can score a worldie.",
-        commentary: "You back yourself to be the hero! It's a high-risk, high-reward play that shows great self-confidence.",
-      },
-      {
-        icon: "🤝",
-        text: "Pass to my teammate.",
-        value: "I pass to my teammate who’s  ready for a tap-in.",
-        commentary: "A smart, selfless decision for the good of the team! Recognising the better option shows great awareness and teamwork – it’s about the three points not individuals.",
-      },
-    ],
+    description: "What do you do, and what’s your reasoning?",
+    interaction: "text",
+    commentary: "The final whistle is moments away, and the game is in your hands. A pressure cooker situation that reveals true character!",
   },
 ];
