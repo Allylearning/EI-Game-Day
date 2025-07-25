@@ -13,7 +13,7 @@ const LeaderboardRow = ({ entry }: { entry: LeaderboardEntry }) => (
   <TableRow>
     <TableCell className="font-medium text-center">
       {entry.rank === 1 ? (
-        <Crown className="w-6 h-6 text-yellow-400" />
+        <Crown className="w-6 h-6 text-yellow-400 mx-auto" />
       ) : (
         entry.rank
       )}
@@ -24,7 +24,7 @@ const LeaderboardRow = ({ entry }: { entry: LeaderboardEntry }) => (
           {entry.selfie && <AvatarImage src={entry.selfie} alt={entry.name} />}
           <AvatarFallback>{entry.name.charAt(0)}</AvatarFallback>
         </Avatar>
-        <div>
+        <div className="text-left">
           <span className="font-medium">{entry.name}</span>
           {entry.club && <p className="text-xs text-muted-foreground">{entry.club}</p>}
         </div>
@@ -38,7 +38,7 @@ const LeaderboardSkeleton = () => (
     <>
         {Array.from({ length: 5 }).map((_, i) => (
             <TableRow key={`skeleton-${i}`}>
-                <TableCell><Skeleton className="h-6 w-6 rounded-full" /></TableCell>
+                <TableCell><Skeleton className="h-6 w-6 rounded-full mx-auto" /></TableCell>
                 <TableCell>
                     <div className="flex items-center gap-3">
                         <Skeleton className="h-8 w-8 rounded-full" />
@@ -82,7 +82,7 @@ export default function Leaderboard() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[50px] font-extrabold">Rank</TableHead>
+            <TableHead className="w-[50px] font-extrabold text-center">Rank</TableHead>
             <TableHead className="font-extrabold">Player</TableHead>
             <TableHead className="text-right font-extrabold">Score</TableHead>
           </TableRow>
