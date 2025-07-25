@@ -45,15 +45,15 @@ const prompt = ai.definePrompt({
   output: { schema: GetPlayerReportOutputSchema },
   prompt: `You are an expert in emotional intelligence and a British football scout. Your task is to analyse a player's answers to six scenarios, calculate their EQ scores, and assign them a football position.
 First, score the player's answers based on six emotional intelligence categories: 
-
 - Patience: The ability to wait for the right moment without frustration.
 - Empathy: Understanding and responding to others' feelings or perspectives.
 - Resilience: Recovering quickly from setbacks or negative events.
 - Focus: Maintaining concentration under pressure or distractions.
 - Teamwork: Willingness to collaborate and support team goals.
 - Confidence: Self-belief and assertiveness in high-stakes situations.
-Each score should be between 0 and 100.
-Be sure to use the full range of scores; for answers that perfectly exemplify a trait, award a score of 95 or higher.
+Each score should be between 0 and 100. 
+It is critical that you use the full range of scores. For answers that perfectly exemplify a trait, award a high score (95-100). For answers that are very poor, negative, or demonstrate a complete lack of an EQ skill, you must award a very low score (0-10). Do not be afraid to give low scores for bad answers. Avoid bunching scores in the middle or high end. The two open-text answers (scenarios 2 and 4) should carry more weight in your analysis.
+
 Second, based on the EQ scores you just calculated, assign a single football position abbreviation to the player.
 Here are the available position abbreviations: GK, CB, FB, WB, DM, CM, WM, AM, WF, CF.
 Use this mapping of EQ skills to positions as a guide:
