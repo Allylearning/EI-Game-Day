@@ -83,7 +83,7 @@ export default function ResultsPage({ userData, quizResult, onRestart }: Results
         const overallScore = getOverallScore(eqScores);
         const finalScore = getFinalScore(matchEvents);
         const shareUrl = window.location.href;
-        const shareText = `I just scored ${overallScore}) on Game Day! My player comparison is ${playerComparison}. Think you can do better? Try it yourself:`;
+        const shareText = `I just scored ${overallScore} on Game Day! My player comparison is ${playerComparison}. Think you can do better? Try it yourself:`;
         const fullMessage = `${shareText} ${shareUrl}`;
 
         const imageBlob = await generateCardImage(1); // Use lower resolution for sharing

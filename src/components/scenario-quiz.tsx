@@ -212,16 +212,17 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
 
   const getScoreChange = (minute: number, answer: string): number => {
     const lowerCaseAnswer = answer.toLowerCase();
-    const positiveKeywords = ['shoot', 'score', 'goal', 'place', 'slot', 'calmly', 'confident', 'finish', 'precision', 'corner', 'net', 'control', 'impact', 'change', 'pass', 'settle', 'compose', 'assist'];
+    const positiveKeywords = ['shoot', 'score', 'goal', 'place', 'slot', 'calmly', 'confident', 'finish', 'precision', 'corner', 'net', 'control', 'impact', 'change', 'pass', 'settle', 'compose', 'assist', 'decisive pass', 'best decision'];
 
     switch (minute) {
+        case 15: // One-on-one.
+        case 90+3: // Final shot.
+            // A positive answer should result in a goal for both scenarios.
+            return positiveKeywords.some(kw => lowerCaseAnswer.includes(kw)) ? 1 : 0;
         case 30: // Teammate conflict
             return lowerCaseAnswer.includes('shout back') ? -1 : 0;
         case 60: // Defender mistake
             return lowerCaseAnswer.includes('sprint') || lowerCaseAnswer.includes('glare') ? -1 : 0;
-        case 90: // Final shot. A positive answer should result in a goal.
-        case 15: // One-on-one. A positive answer should result in a goal.
-            return positiveKeywords.some(kw => lowerCaseAnswer.includes(kw)) ? 1 : 0;
         default:
             return 0;
     }
