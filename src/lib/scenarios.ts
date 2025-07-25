@@ -83,7 +83,7 @@ export const scenarios = [
         {
             icon: "😒",
             text: "Glare at them for their mistake.",
-            value: "I give my teammate a frustrated look so they know they messed up, They’ve got to stay switched on.",
+            value: "I give my teammate a frustrated glare so they know they messed up, They’ve got to stay switched on.",
             commentary: "Frustration’s natural, but this moment calls for support, not shame. It might shake their confidence even more.",
         },
     ]

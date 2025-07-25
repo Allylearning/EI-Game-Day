@@ -130,7 +130,9 @@ const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
                {/* Name, Title, and Score */}
               <div className="relative z-10 text-center mb-4">
                 <h3 className="font-headline text-4xl font-extrabold truncate drop-shadow-lg">{fullName}</h3>
-                <p className="text-primary font-semibold text-xl drop-shadow-md">{playerComparison}</p>
+                {playerComparison && playerComparison !== 'None' && (
+                  <p className="text-primary font-semibold text-xl drop-shadow-md">{playerComparison}</p>
+                )}
                  <div className="flex justify-center items-center gap-4 mt-2 text-2xl font-headline drop-shadow-md font-extrabold">
                     <span className='text-green-400'>{finalScore.goalsFor}</span>
                     <span>-</span>

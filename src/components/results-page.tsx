@@ -32,12 +32,23 @@ export default function ResultsPage({ userData, quizResult, onRestart }: Results
   const generateCardImage = async (pixelRatio: number = 2): Promise<Blob | null> => {
     if (!cardRef.current) return null;
     try {
-        const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio });
-        const blob = await (await fetch(dataUrl)).blob();
-        return blob;
+      // This filter function is the key to fixing the cross-origin error with Google Fonts.
+      // It tells html-to-image to re-process and embed linked stylesheets.
+      const filter = (node: HTMLElement) => {
+        return node.tagName !== 'link' || (node as HTMLLinkElement).rel !== 'stylesheet';
+      };
+
+      const dataUrl = await toPng(cardRef.current, { 
+        cacheBust: true, 
+        pixelRatio,
+        filter: filter,
+      });
+
+      const blob = await (await fetch(dataUrl)).blob();
+      return blob;
     } catch (err) {
-        console.error('Failed to generate card image', err);
-        return null;
+      console.error('Failed to generate card image', err);
+      return null;
     }
   };
 
@@ -48,7 +59,8 @@ export default function ResultsPage({ userData, quizResult, onRestart }: Results
       if (blob) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.download = `gameday-player-card-${userData.name.toLowerCase().replace(/ /g, '-')}.png`;
+        const fullName = `${userData.firstName} ${userData.lastName}`;
+        link.download = `gameday-player-card-${fullName.toLowerCase().replace(/ /g, '-')}.png`;
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
@@ -71,14 +83,16 @@ export default function ResultsPage({ userData, quizResult, onRestart }: Results
         const overallScore = getOverallScore(eqScores);
         const finalScore = getFinalScore(matchEvents);
         const shareUrl = window.location.href;
-        const shareText = `I just scored ${overallScore} on Game Day! My player comparison is ${playerComparison}. Think you can do better? Try it yourself:`;
+        const shareText = `I just scored ${overallScore}) on Game Day! My player comparison is ${playerComparison}. Think you can do better? Try it yourself:`;
         const fullMessage = `${shareText} ${shareUrl}`;
 
         const imageBlob = await generateCardImage(1); // Use lower resolution for sharing
         
+        const fullName = `${userData.firstName} ${userData.lastName}`;
+
         // Use Web Share API if available, especially for sharing files
         if (imageBlob && navigator.canShare && navigator.canShare({ files: [new File([imageBlob], 'card.png', { type: 'image/png' })] })) {
-            const file = new File([imageBlob], `gameday-card-${userData.name}.png`, { type: 'image/png' });
+            const file = new File([imageBlob], `gameday-card-${fullName}.png`, { type: 'image/png' });
             try {
                 await navigator.share({
                     title: 'My Game Day Results!',
@@ -131,7 +145,7 @@ export default function ResultsPage({ userData, quizResult, onRestart }: Results
         </TabsList>
         <TabsContent value="card" className="w-full max-w-md flex flex-col items-center mt-6 gap-6">
             <PlayerCard ref={cardRef} userData={userData} quizResult={quizResult} />
-            {!isFallback && (
+            {!isFallback && playerComparison && playerComparison !== 'None' && (
               <Alert>
                   <HighestStatIcon className="h-4 w-4" />
                   <AlertTitle className="font-extrabold">Player Comparison: {playerComparison}</AlertTitle>
