@@ -178,7 +178,7 @@ export default function ResultsPage({ userData, quizResult, onRestart }: Results
         <div className="text-center mt-8 border-t border-border/50 pt-6 w-full max-w-md flex flex-col items-center gap-4">
             <Logo />
             <p className="text-muted-foreground my-4">For more on emotional intelligence, get in touch with us today.</p>
-            <a href="mailto:enquiries@melearning.co.uk">
+            <a href="mailto:maxblencowe@melearning.co.uk">
                 <Button className="font-extrabold">
                     <Mail className="mr-2 h-4 w-4" />
                     Get in Touch
