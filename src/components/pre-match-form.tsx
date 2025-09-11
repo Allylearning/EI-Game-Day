@@ -214,7 +214,7 @@ export default function PreMatchForm({ onSubmit }: PreMatchFormProps) {
                 </Button>
                 </form>
             </Form>
-            <p className="text-xs text-muted-foreground max-w-sm mt-6">
+            <p className="text-xs text-muted-foreground max-w-sm mt-6 mx-auto text-center">
                 By playing this game, you consent to subscribe to our communications list. You can unsubscribe at any time.
             </p>
         </TabsContent>
