@@ -11,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const MODEL_ID = 'googleai/gemini-1.5-flash';
+const MODEL_ID = 'googleai/gemini-2.5-flash';
 
 const GetPlayerReportInputSchema = z.object({
   scenario1: z.string().min(1).max(4000).describe("The user's answer to the first scenario."),
