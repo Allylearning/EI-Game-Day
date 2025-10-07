@@ -81,7 +81,7 @@ Scenario 5 (Defender mistake): {{{scenario5}}}
 Scenario 6 (Final shot decision): {{{scenario6}}}
 
 **Output:**
-Return only a JSON object with keys `eqScores`, `position`, and `playerComparison`. Do not include extra commentary.`,
+Return only a JSON object with keys "eqScores", "position", and "playerComparison". Do not include extra commentary.`,
 });
 
 const getPlayerReportFlow = ai.defineFlow(
