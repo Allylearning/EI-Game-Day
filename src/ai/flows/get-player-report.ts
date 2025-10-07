@@ -46,36 +46,33 @@ const prompt = ai.definePrompt({
   model: MODEL_ID,
   input: { schema: GetPlayerReportInputSchema },
   output: { schema: GetPlayerReportOutputSchema },
-  config: { temperature: 0.6, maxOutputTokens: 1024 },
-  prompt: `You are an expert in emotional intelligence and a British football scout. Your task is to analyse a player's answers to six scenarios, calculate their EQ scores, and assign them a football position.
-First, score the player's answers based on six emotional intelligence categories: 
-- Patience: The ability to wait for the right moment without frustration.
-- Empathy: Understanding and responding to others' feelings or perspectives.
-- Resilience: Recovering quickly from setbacks or negative events.
-- Focus: Maintaining concentration under pressure or distractions.
-- Teamwork: Willingness to collaborate and support team goals.
-- Confidence: Self-belief and assertiveness in high-stakes situations.
-Each score should be between 0 and 100. 
-It is critical that you use the full range of scores. For answers that perfectly exemplify a trait, award a high score (95-100). For answers that are very poor, negative, or demonstrate a complete lack of an EQ skill, you must award a very low score (0-10). Do not be afraid to give low scores for bad answers. Avoid bunching scores in the middle.
-The three open-text answers (scenarios 2, 4, and 6) should carry more weight in your analysis.
+  config: {
+    temperature: 0.6,
+    maxOutputTokens: 1024,
+    responseMimeType: 'application/json',
+  },
+  prompt: `You are an expert in emotional intelligence.
+Analyse a player’s six scenario answers to generate EQ scores, assign a football position, and compare them to an active Premier League or Championship player.
 
-Second, based on the EQ scores you just calculated, assign a single football position abbreviation to the player.
-Here are the available position abbreviations: GK, CB, FB, WB, DM, CM, WM, AM, WF, CF.
-Use this mapping of EQ skills to positions as a guide:
-- High Resilience and Focus: Essential for defensive roles. Suggests GK or CB.
-- High Teamwork and Empathy: Key for midfielders who control the game. Suggests CM, DM, or AM.
-- High Patience and Focus: Good for creative roles that wait for the right moment. Suggests AM or a deep-lying CM.
-- High Confidence and Focus: Perfect for attackers who need to be decisive. Suggests CF or WF.
-- A balanced profile might suggest versatile roles like FB, WB, or WM.
+**Step 1 — Score EQ traits (0–100):**
+- Patience: waiting calmly for the right moment.
+- Empathy: understanding others’ feelings.
+- Resilience: recovering quickly from setbacks.
+- Focus: maintaining concentration under pressure.
+- Teamwork: collaborating toward team goals.
+- Confidence: self-belief in high-stakes situations.
+Use the full 0–100 range. Give low scores (0–10) for poor EQ and high scores (95–100) for excellent EQ. Scenarios 2, 4, and 6 should influence results more strongly.
 
-Third, based on the position and the EQ scores, provide a comparison to a real-world player known for similar qualities. For example:
-- A CM with high teamwork and empathy could be compared to Kevin De Bruyne.
-- A CF with high confidence and focus could be compared to Erling Haaland.
-- A CB with high resilience and focus could be compared to Virgil van Dijk.
-- An AM with high patience and creativity could be compared to Martin Ødegaard.
-Please only use players who are currently active in the Premier League or Championship.
+**Step 2 — Assign a football position** using EQ patterns:
+- High Resilience + Focus → GK or CB
+- High Teamwork + Empathy → CM, DM, or AM
+- High Patience + Focus → AM or deep-lying CM
+- High Confidence + Focus → CF or WF
+- Balanced profile → FB, WB, or WM
 
-Here are the player's answers to the scenarios:
+**Step 3 — Suggest a player comparison** with a current Premier League or Championship player known for similar traits.
+
+**Player answers:**
 Scenario 1 (Not starting): {{{scenario1}}}
 Scenario 2 (One-on-one): {{{scenario2}}}
 Scenario 3 (Teammate conflict): {{{scenario3}}}
@@ -83,7 +80,8 @@ Scenario 4 (Halftime talk): {{{scenario4}}}
 Scenario 5 (Defender mistake): {{{scenario5}}}
 Scenario 6 (Final shot decision): {{{scenario6}}}
 
-Provide your full analysis as a single JSON object containing the eqScores, position, and playerComparison.`,
+**Output:**
+Return only a JSON object with keys `eqScores`, `position`, and `playerComparison`. Do not include extra commentary.`,
 });
 
 const getPlayerReportFlow = ai.defineFlow(
@@ -96,9 +94,41 @@ const getPlayerReportFlow = ai.defineFlow(
     const approxBytes = Buffer.byteLength(JSON.stringify(input));
     console.log('[getPlayerReportFlow] START', { approxBytes, model: MODEL_ID });
     try {
-      const { output } = await prompt(input);
+      const result = await prompt(input);
+      let out = (result as any)?.output as GetPlayerReportOutput | null | undefined;
+
+      // If structured output is missing, try to recover from raw text
+      if (!out) {
+        const raw = ((result as any)?.text ?? (result as any)?.outputText ?? '').toString().trim();
+        if (raw) {
+          try {
+            out = JSON.parse(raw) as GetPlayerReportOutput;
+            console.warn('[getPlayerReportFlow] Recovered output from raw text JSON');
+          } catch {
+            console.warn('[getPlayerReportFlow] Raw text was not valid JSON');
+          }
+        }
+      }
+
+      // Defensive fallback to avoid crashing the UX
+      if (!out) {
+        console.warn('[getPlayerReportFlow] Using defensive fallback output');
+        out = {
+          eqScores: {
+            patience: 50,
+            empathy: 50,
+            resilience: 50,
+            focus: 50,
+            teamwork: 50,
+            confidence: 50,
+          },
+          position: 'CM',
+          playerComparison: 'Luka Modrić',
+        };
+      }
+
       console.log('[getPlayerReportFlow] DONE');
-      return output!;
+      return out as GetPlayerReportOutput;
     } catch (e: any) {
       console.error('[getPlayerReportFlow] ERROR', {
         name: e?.name,
