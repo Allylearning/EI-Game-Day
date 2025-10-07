@@ -11,13 +11,15 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
+const MODEL_ID = 'googleai/gemini-1.5-flash';
+
 const GetPlayerReportInputSchema = z.object({
-  scenario1: z.string().describe("The user's answer to the first scenario."),
-  scenario2: z.string().describe("The user's answer to the second scenario."),
-  scenario3: z.string().describe("The user's answer to the third scenario."),
-  scenario4: z.string().describe("The user's answer to the fourth scenario."),
-  scenario5: z.string().describe("The user's answer to the fifth scenario."),
-  scenario6: z.string().describe("The user's answer to the sixth scenario."),
+  scenario1: z.string().min(1).max(4000).describe("The user's answer to the first scenario."),
+  scenario2: z.string().min(1).max(4000).describe("The user's answer to the second scenario."),
+  scenario3: z.string().min(1).max(4000).describe("The user's answer to the third scenario."),
+  scenario4: z.string().min(1).max(4000).describe("The user's answer to the fourth scenario."),
+  scenario5: z.string().min(1).max(4000).describe("The user's answer to the fifth scenario."),
+  scenario6: z.string().min(1).max(4000).describe("The user's answer to the sixth scenario."),
 });
 export type GetPlayerReportInput = z.infer<typeof GetPlayerReportInputSchema>;
 
@@ -41,8 +43,10 @@ export async function getPlayerReport(input: GetPlayerReportInput): Promise<GetP
 
 const prompt = ai.definePrompt({
   name: 'getPlayerReportPrompt',
+  model: MODEL_ID,
   input: { schema: GetPlayerReportInputSchema },
   output: { schema: GetPlayerReportOutputSchema },
+  config: { temperature: 0.6, maxOutputTokens: 1024 },
   prompt: `You are an expert in emotional intelligence and a British football scout. Your task is to analyse a player's answers to six scenarios, calculate their EQ scores, and assign them a football position.
 First, score the player's answers based on six emotional intelligence categories: 
 - Patience: The ability to wait for the right moment without frustration.
@@ -89,7 +93,20 @@ const getPlayerReportFlow = ai.defineFlow(
     outputSchema: GetPlayerReportOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+    const approxBytes = Buffer.byteLength(JSON.stringify(input));
+    console.log('[getPlayerReportFlow] START', { approxBytes, model: MODEL_ID });
+    try {
+      const { output } = await prompt(input);
+      console.log('[getPlayerReportFlow] DONE');
+      return output!;
+    } catch (e: any) {
+      console.error('[getPlayerReportFlow] ERROR', {
+        name: e?.name,
+        message: e?.message,
+        code: e?.code,
+        status: e?.status,
+      });
+      throw e;
+    }
   }
 );
