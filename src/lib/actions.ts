@@ -1,4 +1,3 @@
-
 'use server';
 
 import { getPlayerReport, type GetPlayerReportInput } from '@/ai/flows/get-player-report';
@@ -7,69 +6,27 @@ import type { MatchEvent, QuizResult, UserData } from './types';
 import { addPlayerScore } from './db';
 import { getOverallScore } from './helpers';
 
-async function sendToCrmAction(data: { firstName: string; lastName: string; email: string; club: string }) {
-  console.log('--- Starting Zapier Webhook Submission ---');
-  
-  const { firstName, lastName, email, club } = data;
-  const zapierWebhookUrl = process.env.ZAPIER_WEBHOOK_URL;
-
-  if (!zapierWebhookUrl) {
-    console.error('Zapier Webhook URL is not configured in .env file.');
-    console.log('--- Zapier Webhook Submission Ended ---');
-    return;
-  }
-
-  const payload = {
-    firstName,
-    lastName,
-    email,
-    club: club || 'N/A',
-  };
-
-  const headers = {
-    'Content-Type': 'application/json',
-  };
-
-  console.log('Sending to Zapier Webhook:', zapierWebhookUrl);
-  console.log('Request Payload:', JSON.stringify(payload, null, 2));
-
-  try {
-    const response = await fetch(zapierWebhookUrl, {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify(payload),
-    });
-
-    console.log('Zapier Webhook Response Status:', response.status, response.statusText);
-    const responseBody = await response.json();
-    console.log('Zapier Webhook Response Body:', responseBody);
-
-    if (response.ok) {
-        console.log('Successfully sent user data to Zapier.');
-    } else {
-        console.error('Failed to send data to Zapier. Webhook responded with an error.');
-    }
-  } catch (error) {
-    console.error('An unexpected error occurred while submitting data to Zapier:', error);
-  } finally {
-    console.log('--- Zapier Webhook Submission Ended ---');
-  }
-}
-
 export async function gradeAllAnswersAction(
   {answers, events, userData}: {answers: Record<string, string>, events: MatchEvent[], userData: UserData}
 ): Promise<{ success: boolean; data: QuizResult; error?: string }> {
   try {
     const fullName = `${userData.firstName} ${userData.lastName}`;
     
-    // Fire off the CRM submission. We don't wait for it to complete
-    // so it doesn't slow down the user experience.
-    sendToCrmAction({ 
-      firstName: userData.firstName, 
-      lastName: userData.lastName, 
-      email: userData.email, 
-      club: userData.club 
-    });
+
+    // --- n8n Integration Placeholder ---
+    // In the future, trigger an n8n webhook here to send user data for further automation.
+    // Example:
+    //   await fetch('https://your-n8n-instance.com/webhook/your-webhook-id', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({
+    //       firstName: userData.firstName,
+    //       lastName: userData.lastName,
+    //       email: userData.email,
+    //       club: userData.club
+    //     }),
+    //   });
+    // Note: This section is commented out as a placeholder for future n8n integration.
 
     const reportInput: GetPlayerReportInput = {
       scenario1: answers['scenario1'] || 'No answer provided.',
