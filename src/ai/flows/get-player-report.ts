@@ -11,8 +11,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const MODEL_ID = 'googleai/gemini-2.5-pro';
-
 const GetPlayerReportInputSchema = z.object({
   scenario1: z.string().min(1).max(4000).describe("The user's answer to the first scenario."),
   scenario2: z.string().min(1).max(4000).describe("The user's answer to the second scenario."),
@@ -43,46 +41,47 @@ export async function getPlayerReport(input: GetPlayerReportInput): Promise<GetP
 
 const prompt = ai.definePrompt({
   name: 'getPlayerReportPrompt',
-  model: MODEL_ID,
   input: { schema: GetPlayerReportInputSchema },
   config: {
-    temperature: 0.3,
-    maxOutputTokens: 2048,
-    responseMimeType: 'application/json',
+    temperature: 0.2,
+    maxOutputTokens: 1024,
   },
   prompt: `You are an expert in emotional intelligence.
-Analyse a player’s six scenario answers to generate EQ scores, assign a football position, and compare them to an active Premier League or Championship player.
+Analyse a player’s six scenario answers to produce EQ scores, a football position, and a player comparison. Output must be **only** JSON.
 
-Score six EQ traits from 0–100 using the full range (poor answers can be 0–10; excellent 95–100). Weight scenarios 2, 4, and 6 more strongly.
+Scoring (0–100): patience, empathy, resilience, focus, teamwork, confidence. Use full range. Bad = 0–10, excellent = 95–100. Weight scenarios 2, 4, 6 more.
 
 Mapping hints:
-- High Resilience + Focus → GK or CB
-- High Teamwork + Empathy → CM, DM, or AM
+- High Resilience + Focus → GK/CB
+- High Teamwork + Empathy → CM/DM/AM
 - High Patience + Focus → AM or deep-lying CM
-- High Confidence + Focus → CF or WF
-- Balanced profile → FB, WB, or WM
+- High Confidence + Focus → CF/WF
+- Balanced → FB/WB/WM
 
 Player answers:
-Scenario 1 (Not starting): {{{scenario1}}}
-Scenario 2 (One-on-one): {{{scenario2}}}
-Scenario 3 (Teammate conflict): {{{scenario3}}}
-Scenario 4 (Halftime talk): {{{scenario4}}}
-Scenario 5 (Defender mistake): {{{scenario5}}}
-Scenario 6 (Final shot decision): {{{scenario6}}}
+Scenario 1: {{{scenario1}}}
+Scenario 2: {{{scenario2}}}
+Scenario 3: {{{scenario3}}}
+Scenario 4: {{{scenario4}}}
+Scenario 5: {{{scenario5}}}
+Scenario 6: {{{scenario6}}}
 
-Output: Return **only** JSON in exactly this shape (no extra text, no markdown):
+Example output (follow this shape exactly):
 {
   "eqScores": {
-    "patience": 0,
-    "empathy": 0,
-    "resilience": 0,
-    "focus": 0,
-    "teamwork": 0,
-    "confidence": 0
+    "patience": 72,
+    "empathy": 64,
+    "resilience": 83,
+    "focus": 78,
+    "teamwork": 70,
+    "confidence": 76
   },
   "position": "CM",
-  "playerComparison": "Player Name"
-}`,
+  "playerComparison": "Declan Rice"
+}
+
+Return only a valid JSON object in the exact shape shown above. Do not include any extra text, explanations, or markdown.
+Only return valid JSON and nothing else.`,
 });
 
 const getPlayerReportFlow = ai.defineFlow(
@@ -93,9 +92,9 @@ const getPlayerReportFlow = ai.defineFlow(
   },
   async (input) => {
     const approxBytes = Buffer.byteLength(JSON.stringify(input));
-    console.log('[getPlayerReportFlow] START', { approxBytes, model: MODEL_ID });
+    console.log('[getPlayerReportFlow] START', { approxBytes, model: 'default(genkit)' });
     try {
-      const maxAttempts = 3;
+      const maxAttempts = 5;
       let out: GetPlayerReportOutput | null = null;
       let lastErr: any = null;
 
@@ -107,6 +106,9 @@ const getPlayerReportFlow = ai.defineFlow(
           hasCandidates: Array.isArray((result as any)?.candidates),
         };
         console.log(`[getPlayerReportFlow] attempt ${attempt} result flags`, dbg);
+
+        const preview = (((result as any)?.text ?? (result as any)?.outputText ?? '') as string).slice(0, 200);
+        if (preview) console.log('[getPlayerReportFlow] text preview:', preview);
 
         // 1) Structured output path
         out = (result as any)?.output as GetPlayerReportOutput | null | undefined || null;
@@ -155,7 +157,7 @@ const getPlayerReportFlow = ai.defineFlow(
 
         // Backoff before next attempt if still no output
         if (!out && attempt < maxAttempts) {
-          const delayMs = 400 * attempt; // simple linear backoff
+          const delayMs = 600 * attempt; // simple linear backoff
           await new Promise((r) => setTimeout(r, delayMs));
         }
       }
