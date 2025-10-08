@@ -45,7 +45,6 @@ const prompt = ai.definePrompt({
   name: 'getPlayerReportPrompt',
   model: MODEL_ID,
   input: { schema: GetPlayerReportInputSchema },
-  output: { schema: GetPlayerReportOutputSchema },
   config: {
     temperature: 0.6,
     maxOutputTokens: 1024,
@@ -107,6 +106,17 @@ const getPlayerReportFlow = ai.defineFlow(
           } catch {
             console.warn('[getPlayerReportFlow] Raw text was not valid JSON');
           }
+        }
+      }
+
+      // Validate against our Zod schema; if it fails, we'll fall back
+      if (out) {
+        const validated = GetPlayerReportOutputSchema.safeParse(out);
+        if (!validated.success) {
+          console.warn('[getPlayerReportFlow] Parsed output failed schema validation, using fallback');
+          out = null as any;
+        } else {
+          out = validated.data;
         }
       }
 
