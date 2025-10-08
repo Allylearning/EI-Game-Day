@@ -9,7 +9,7 @@ export const ai = genkit({
     }),
   ],
   // Use provider-prefixed model id so Genkit resolves the registered model
-  model: 'googleai/gemini-2.5-pro',
+  model: 'googleai/gemini-2.5-flash',
 });
 
 // Startup sanity check so missing keys are obvious in logs
