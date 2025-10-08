@@ -11,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const MODEL_ID = 'googleai/gemini-2.5-flash';
+const MODEL_ID = 'googleai/gemini-2.5-pro';
 
 const GetPlayerReportInputSchema = z.object({
   scenario1: z.string().min(1).max(4000).describe("The user's answer to the first scenario."),
@@ -46,8 +46,8 @@ const prompt = ai.definePrompt({
   model: MODEL_ID,
   input: { schema: GetPlayerReportInputSchema },
   config: {
-    temperature: 0.2,
-    maxOutputTokens: 512,
+    temperature: 0.3,
+    maxOutputTokens: 2048,
     responseMimeType: 'application/json',
   },
   prompt: `You are an expert in emotional intelligence.
@@ -95,34 +95,69 @@ const getPlayerReportFlow = ai.defineFlow(
     const approxBytes = Buffer.byteLength(JSON.stringify(input));
     console.log('[getPlayerReportFlow] START', { approxBytes, model: MODEL_ID });
     try {
-      const result = await prompt(input);
-      let out = (result as any)?.output as GetPlayerReportOutput | null | undefined;
+      const maxAttempts = 3;
+      let out: GetPlayerReportOutput | null = null;
+      let lastErr: any = null;
 
-      // If structured output is missing, try to recover from raw text
-      if (!out) {
-        const raw = ((result as any)?.text ?? (result as any)?.outputText ?? '').toString().trim();
-        if (raw) {
-          try {
-            out = JSON.parse(raw) as GetPlayerReportOutput;
-            console.warn('[getPlayerReportFlow] Recovered output from raw text JSON');
-          } catch {
-            console.warn('[getPlayerReportFlow] Raw text was not valid JSON');
+      for (let attempt = 1; attempt <= maxAttempts && !out; attempt++) {
+        const result = await prompt(input);
+        const dbg = {
+          hasOutput: Boolean((result as any)?.output),
+          hasText: Boolean((result as any)?.text),
+          hasCandidates: Array.isArray((result as any)?.candidates),
+        };
+        console.log(`[getPlayerReportFlow] attempt ${attempt} result flags`, dbg);
+
+        // 1) Structured output path
+        out = (result as any)?.output as GetPlayerReportOutput | null | undefined || null;
+
+        // 2) Plain text fields
+        if (!out) {
+          const raw = ((result as any)?.text ?? (result as any)?.outputText ?? '').toString().trim();
+          if (raw) {
+            try {
+              out = JSON.parse(raw) as GetPlayerReportOutput;
+              console.warn('[getPlayerReportFlow] Recovered output from raw text JSON');
+            } catch (e) {
+              lastErr = e;
+            }
           }
         }
-      }
 
-      // Additional recovery: try to read text from candidates[].content.parts[].text
-      if (!out) {
-        try {
-          const parts = (((result as any)?.candidates?.[0]?.content?.parts) || []) as any[];
-          const joined = parts.map((p) => (p?.text ?? '')).join('').trim();
-          if (joined) {
-            try {
-              out = JSON.parse(joined) as GetPlayerReportOutput;
-              console.warn('[getPlayerReportFlow] Recovered output from candidates parts JSON');
-            } catch {}
+        // 3) Candidates parts (common Gemini shape)
+        if (!out) {
+          try {
+            const parts = (((result as any)?.candidates?.[0]?.content?.parts) || []) as any[];
+            const joined = parts.map((p) => (p?.text ?? '')).join('').trim();
+            if (joined) {
+              try {
+                out = JSON.parse(joined) as GetPlayerReportOutput;
+                console.warn('[getPlayerReportFlow] Recovered output from candidates parts JSON');
+              } catch (e) {
+                lastErr = e;
+              }
+            }
+          } catch (e) {
+            lastErr = e;
           }
-        } catch {}
+        }
+
+        // 4) Validate against Zod; if invalid, clear out to trigger retry/fallback
+        if (out) {
+          const validated = GetPlayerReportOutputSchema.safeParse(out);
+          if (!validated.success) {
+            console.warn('[getPlayerReportFlow] Parsed output failed schema validation on attempt', attempt);
+            out = null;
+          } else {
+            out = validated.data;
+          }
+        }
+
+        // Backoff before next attempt if still no output
+        if (!out && attempt < maxAttempts) {
+          const delayMs = 400 * attempt; // simple linear backoff
+          await new Promise((r) => setTimeout(r, delayMs));
+        }
       }
 
       // Defensive fallback to avoid crashing the UX
