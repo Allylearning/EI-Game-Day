@@ -46,32 +46,23 @@ const prompt = ai.definePrompt({
   model: MODEL_ID,
   input: { schema: GetPlayerReportInputSchema },
   config: {
-    temperature: 0.6,
-    maxOutputTokens: 1024,
+    temperature: 0.2,
+    maxOutputTokens: 512,
     responseMimeType: 'application/json',
   },
   prompt: `You are an expert in emotional intelligence.
 Analyse a player’s six scenario answers to generate EQ scores, assign a football position, and compare them to an active Premier League or Championship player.
 
-**Step 1 — Score EQ traits (0–100):**
-- Patience: waiting calmly for the right moment.
-- Empathy: understanding others’ feelings.
-- Resilience: recovering quickly from setbacks.
-- Focus: maintaining concentration under pressure.
-- Teamwork: collaborating toward team goals.
-- Confidence: self-belief in high-stakes situations.
-Use the full 0–100 range. Give low scores (0–10) for poor EQ and high scores (95–100) for excellent EQ. Scenarios 2, 4, and 6 should influence results more strongly.
+Score six EQ traits from 0–100 using the full range (poor answers can be 0–10; excellent 95–100). Weight scenarios 2, 4, and 6 more strongly.
 
-**Step 2 — Assign a football position** using EQ patterns:
+Mapping hints:
 - High Resilience + Focus → GK or CB
 - High Teamwork + Empathy → CM, DM, or AM
 - High Patience + Focus → AM or deep-lying CM
 - High Confidence + Focus → CF or WF
 - Balanced profile → FB, WB, or WM
 
-**Step 3 — Suggest a player comparison** with a current Premier League or Championship player known for similar traits.
-
-**Player answers:**
+Player answers:
 Scenario 1 (Not starting): {{{scenario1}}}
 Scenario 2 (One-on-one): {{{scenario2}}}
 Scenario 3 (Teammate conflict): {{{scenario3}}}
@@ -79,8 +70,19 @@ Scenario 4 (Halftime talk): {{{scenario4}}}
 Scenario 5 (Defender mistake): {{{scenario5}}}
 Scenario 6 (Final shot decision): {{{scenario6}}}
 
-**Output:**
-Return only a JSON object with keys "eqScores", "position", and "playerComparison". Do not include extra commentary.`,
+Output: Return **only** JSON in exactly this shape (no extra text, no markdown):
+{
+  "eqScores": {
+    "patience": 0,
+    "empathy": 0,
+    "resilience": 0,
+    "focus": 0,
+    "teamwork": 0,
+    "confidence": 0
+  },
+  "position": "CM",
+  "playerComparison": "Player Name"
+}`,
 });
 
 const getPlayerReportFlow = ai.defineFlow(
@@ -109,15 +111,18 @@ const getPlayerReportFlow = ai.defineFlow(
         }
       }
 
-      // Validate against our Zod schema; if it fails, we'll fall back
-      if (out) {
-        const validated = GetPlayerReportOutputSchema.safeParse(out);
-        if (!validated.success) {
-          console.warn('[getPlayerReportFlow] Parsed output failed schema validation, using fallback');
-          out = null as any;
-        } else {
-          out = validated.data;
-        }
+      // Additional recovery: try to read text from candidates[].content.parts[].text
+      if (!out) {
+        try {
+          const parts = (((result as any)?.candidates?.[0]?.content?.parts) || []) as any[];
+          const joined = parts.map((p) => (p?.text ?? '')).join('').trim();
+          if (joined) {
+            try {
+              out = JSON.parse(joined) as GetPlayerReportOutput;
+              console.warn('[getPlayerReportFlow] Recovered output from candidates parts JSON');
+            } catch {}
+          }
+        } catch {}
       }
 
       // Defensive fallback to avoid crashing the UX
