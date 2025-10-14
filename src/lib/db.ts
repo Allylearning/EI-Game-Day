@@ -1,7 +1,8 @@
 
 'use server';
 
-import { neon } from '@neondatabase/serverless';
+import 'dotenv/config';
+import { neon, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import * as schema from './schema';
 import { players } from './schema';
@@ -13,10 +14,15 @@ function getDb() {
     console.error("DATABASE_URL environment variable is not set.");
     return null;
   }
-  // Neon's serverless driver doesn't support the channel_binding parameter.
-  // We'll remove it from the connection string if it exists.
+  
+  // Required for Vercel deployments
+  neonConfig.fetchOptions = {
+    cache: 'no-store',
+  };
+
   const connectionString = process.env.DATABASE_URL.replace('&channel_binding=require', '');
   const sql = neon(connectionString);
+  
   return drizzle(sql, { schema });
 }
 
