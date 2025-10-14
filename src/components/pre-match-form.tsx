@@ -86,7 +86,7 @@ export default function PreMatchForm({ onSubmit, onSkip }: PreMatchFormProps) {
         </TabsList>
         <TabsContent value="start" className="text-center">
             <p className="text-muted-foreground my-6">
-                Test your emotional intelligence in 6 critical match-day scenarios. Get your official player card, see how you rank, and discover which professional footballer you're most like.
+                Test your emotional intelligence in 6 critical match-day scenarios. Get your official player card and see how you rank on the leaderboard.
             </p>
       
             <div className="w-full flex flex-col items-center gap-4">
