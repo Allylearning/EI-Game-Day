@@ -1,4 +1,4 @@
-import type { GetPlayerReportOutput } from "@/ai/flows/get-player-report";
+
 
 export type UserData = {
   firstName: string;
@@ -10,7 +10,14 @@ export type UserData = {
   leaderboardOptIn: boolean;
 };
 
-export type EqScores = GetPlayerReportOutput['eqScores'];
+export type EqScores = {
+    patience: number;
+    empathy: number;
+    resilience: number;
+    focus: number;
+    teamwork: number;
+    confidence: number;
+};
 
 export type MatchEvent = {
   minute: number;
@@ -23,8 +30,6 @@ export type StatName = keyof EqScores;
 export type QuizResult = {
   eqScores: EqScores;
   matchEvents: MatchEvent[];
-  position: string;
-  playerComparison: string;
   isFallback?: boolean; // Optional flag for fallback results
 };
 

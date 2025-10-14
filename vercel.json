@@ -1,0 +1,10 @@
+
+{
+  "build": {
+    "env": {
+      "DATABASE_URL": "@database_url",
+      "ZAPIER_WEBHOOK_URL": "@zapier_webhook_url",
+      "GEMINI_API_KEY": "@gemini_api_key"
+    }
+  }
+}

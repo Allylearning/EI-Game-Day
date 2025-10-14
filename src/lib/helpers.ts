@@ -1,12 +1,22 @@
+
 import type { EqScores, MatchEvent, StatName } from "./types";
 
 export const statTitles: Record<StatName, string> = {
-    patience: 'The Anchor',
-    empathy: 'The Playmaker',
-    resilience: 'The Fortress',
-    focus: 'The Sniper',
-    teamwork: 'The Captain',
-    confidence: 'The Superstar',
+    patience: 'Patience',
+    empathy: 'Empathy',
+    resilience: 'Resilience',
+    focus: 'Focus',
+    teamwork: 'Teamwork',
+    confidence: 'Confidence',
+};
+
+export const statAbbreviations: Record<StatName, string> = {
+    patience: 'PAT',
+    empathy: 'EMP',
+    resilience: 'RES',
+    focus: 'FOC',
+    teamwork: 'TMW',
+    confidence: 'CON',
 };
 
 export function getHighestStat(scores: EqScores): StatName {

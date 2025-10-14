@@ -11,12 +11,13 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useToast } from '@/hooks/use-toast';
 import type { UserData } from '@/lib/types';
 import Image from 'next/image';
-import { User, Plus } from 'lucide-react';
+import { User, Plus, TestTube2 } from 'lucide-react';
 import { Slider } from './ui/slider';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Leaderboard from './leaderboard';
+import { useKonamiCode } from '@/hooks/useKonamiCode';
 
 
 const formSchema = z.object({
@@ -29,12 +30,14 @@ const formSchema = z.object({
 
 type PreMatchFormProps = {
   onSubmit: (data: UserData) => void;
+  onSkip?: () => void;
 };
 
-export default function PreMatchForm({ onSubmit }: PreMatchFormProps) {
+export default function PreMatchForm({ onSubmit, onSkip }: PreMatchFormProps) {
   const [selfie, setSelfie] = useState<string | null>(null);
   const [selfiePosition, setSelfiePosition] = useState({ x: 50, y: 50 });
   const { toast } = useToast();
+  const konamiCodeSuccess = useKonamiCode();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -214,9 +217,17 @@ export default function PreMatchForm({ onSubmit }: PreMatchFormProps) {
                 </Button>
                 </form>
             </Form>
-            <p className="text-xs text-muted-foreground max-w-sm mt-6 mx-auto text-center">
-                By playing this game, you consent to subscribe to our communications list. You can unsubscribe at any time.
-            </p>
+             <div className="w-full flex justify-center">
+                <p className="text-xs text-muted-foreground text-center max-w-sm mt-6">
+                    By playing this game, you consent to subscribe to our communications list. You can unsubscribe at any time.
+                </p>
+            </div>
+             {konamiCodeSuccess && onSkip && (
+                <Button onClick={onSkip} variant="outline" size="sm" className="mt-8 font-extrabold">
+                    <TestTube2 className="mr-2 h-4 w-4" />
+                    Skip to Results
+                </Button>
+            )}
         </TabsContent>
         <TabsContent value="leaderboard">
             <Leaderboard />

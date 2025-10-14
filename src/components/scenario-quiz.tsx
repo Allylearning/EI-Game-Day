@@ -6,13 +6,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { scenarios } from '@/lib/scenarios';
-import { gradeAllAnswersAction, transcribeAudioAction } from '@/lib/actions';
+import { gradeAllAnswersAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Clock, Mic, Square, CheckCircle } from 'lucide-react';
+import { Loader2, Clock, Square, CheckCircle } from 'lucide-react';
 import type { QuizResult, MatchEvent, UserData } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { getFinalScore } from '@/lib/helpers';
@@ -82,12 +82,6 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
   
   // Animation state
   const [scoreChanged, setScoreChanged] = useState<'for' | 'against' | null>(null);
-  
-  // Audio recording state
-  const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, startTranscribingTransition] = useTransition();
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
 
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -97,7 +91,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
     resolver: zodResolver(formSchema),
     defaultValues: { currentAnswer: '' },
   });
-  const { handleSubmit, reset, setValue } = form;
+  const { handleSubmit, reset } = form;
   const scenario = scenarios[currentScenario];
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -107,54 +101,6 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
-    }
-  };
-  
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-      mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = async () => {
-          const base64Audio = reader.result as string;
-          audioChunksRef.current = [];
-          startTranscribingTransition(async () => {
-            const result = await transcribeAudioAction({ audio: base64Audio });
-            if (result.success && result.text) {
-              setValue('currentAnswer', result.text);
-            } else {
-              toast({ title: 'Transcription Failed', description: result.error, variant: 'destructive' });
-            }
-          });
-        };
-      };
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error("Could not start recording", error);
-      toast({ title: 'Recording Error', description: 'Could not access microphone.', variant: 'destructive' });
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-    }
-  };
-
-  const handleAudioButtonClick = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
     }
   };
 
@@ -216,7 +162,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
 
     switch (minute) {
         case 15: // One-on-one.
-        case 90+3: // Final shot.
+        case 90: // Final shot.
             // A positive answer should result in a goal for both scenarios.
             return positiveKeywords.some(kw => lowerCaseAnswer.includes(kw)) ? 1 : 0;
         case 30: // Teammate conflict
@@ -288,7 +234,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
 
           if (!result.success && result.error) {
             toast({
-              title: 'AI Report Failed',
+              title: 'Report Failed',
               description: result.error,
               variant: 'destructive',
             });
@@ -339,7 +285,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
 
   const score = getFinalScore(matchEvents);
   
-  const isLoading = isSubmitting || isTranscribing;
+  const isLoading = isSubmitting;
 
   const handleChoiceClick = (value: string) => {
     setSelectedChoice(value);
@@ -512,11 +458,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
                   </FormItem>
                   )}
               />
-              <div className="flex justify-between items-center gap-4">
-                  <Button type="button" variant="outline" onClick={handleAudioButtonClick} disabled={isLoading} className="font-extrabold">
-                     {isRecording ? <Square className="mr-2 text-red-500 fill-current" /> : <Mic className="mr-2" />}
-                     {isRecording ? 'Stop' : isTranscribing ? 'Transcribing...' : 'Record'}
-                  </Button>
+              <div className="flex justify-end items-center gap-4">
                   <Button type="submit" disabled={isLoading} className="font-extrabold">
                   {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -542,7 +484,7 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
                   disabled={isLoading}
                   size="lg"
                   variant={selectedChoice === option.value ? "default" : "outline"}
-                  className='justify-start h-auto py-3 font-extrabold'
+                  className='justify-start h-auto py-3 font-extrabold whitespace-normal'
                 >
                   {option.icon && <span className="mr-2">{option.icon}</span>}
                   {option.text}
@@ -569,3 +511,5 @@ export default function ScenarioQuiz({ onQuizComplete, userData }: ScenarioQuizP
     </div>
   );
 }
+
+    

@@ -29,7 +29,7 @@ export default function Home() {
     // Show confetti for everyone on completion.
     // Add a small timeout to ensure the confetti component has time to mount.
     setTimeout(() => showConfetti(true), 100);
-    
+
     // Send completion message to parent window if embedded
     if (window.parent && window.parent !== window) {
       window.parent.postMessage('complete', '*');
@@ -43,10 +43,40 @@ export default function Home() {
     showConfetti(false); // Make sure to hide confetti on restart
   };
 
+  const handleSkip = () => {
+    const dummyUserData: UserData = {
+      firstName: 'Dev',
+      lastName: 'Tester',
+      email: 'dev@test.com',
+      club: 'Debug FC',
+      selfie: '/img/Placeholder.png',
+      selfiePosition: { x: 50, y: 50 },
+      leaderboardOptIn: true,
+    };
+    const dummyQuizResult: QuizResult = {
+      eqScores: {
+        patience: 88,
+        empathy: 75,
+        resilience: 92,
+        focus: 95,
+        teamwork: 85,
+        confidence: 90,
+      },
+      matchEvents: [
+        { minute: 15, outcome: 'Goal!', scoreChange: 1 },
+        { minute: 45, outcome: 'Opponent scored.', scoreChange: -1 },
+        { minute: 90, outcome: 'Winning Goal!', scoreChange: 1 },
+      ],
+    };
+    setUserData(dummyUserData);
+    handleQuizComplete(dummyQuizResult);
+  };
+
+
   const renderStep = () => {
     switch (step) {
       case 'form':
-        return <PreMatchForm onSubmit={handleFormSubmit} />;
+        return <PreMatchForm onSubmit={handleFormSubmit} onSkip={handleSkip} />;
       case 'quiz':
         // We know userData is not null here because of the flow
         return <ScenarioQuiz userData={userData!} onQuizComplete={handleQuizComplete} />;

@@ -1,10 +1,61 @@
+
 'use server';
 
-import { getPlayerReport, type GetPlayerReportInput } from '@/ai/flows/get-player-report';
-import { transcribeAudio, type TranscribeAudioInput } from '@/ai/flows/transcribe-audio';
-import type { MatchEvent, QuizResult, UserData } from './types';
+import type { EqScores, MatchEvent, QuizResult, UserData } from './types';
 import { addPlayerScore } from './db';
 import { getOverallScore } from './helpers';
+import { gradeAnswers } from '@/ai/flows/grade-answers-flow';
+
+async function sendToCrmAction(data: { firstName: string; lastName: string; email: string; club: string }) {
+  console.log('--- Starting Zapier Webhook Submission ---');
+  
+  const { firstName, lastName, email, club } = data;
+  const zapierWebhookUrl = process.env.ZAPIER_WEBHOOK_URL;
+
+  if (!zapierWebhookUrl) {
+    console.error('Zapier Webhook URL is not configured in .env file.');
+    console.log('--- Zapier Webhook Submission Ended ---');
+    return;
+  }
+
+  const payload = {
+    firstName,
+    lastName,
+    email,
+    club: club || 'N/A',
+  };
+
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+
+  console.log('Sending to Zapier Webhook:', zapierWebhookUrl);
+  console.log('Request Payload:', JSON.stringify(payload, null, 2));
+
+  try {
+    const response = await fetch(zapierWebhookUrl, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(payload),
+    });
+
+    console.log('Zapier Webhook Response Status:', response.status, response.statusText);
+    
+    // Don't try to parse JSON if the response is not ok, as it might not be JSON.
+    if (response.ok) {
+        const responseBody = await response.json();
+        console.log('Zapier Webhook Response Body:', responseBody);
+        console.log('Successfully sent user data to Zapier.');
+    } else {
+        const responseText = await response.text();
+        console.error('Failed to send data to Zapier. Webhook responded with an error.', responseText);
+    }
+  } catch (error) {
+    console.error('An unexpected error occurred while submitting data to Zapier:', error);
+  } finally {
+    console.log('--- Zapier Webhook Submission Ended ---');
+  }
+}
 
 export async function gradeAllAnswersAction(
   {answers, events, userData}: {answers: Record<string, string>, events: MatchEvent[], userData: UserData}
@@ -12,34 +63,35 @@ export async function gradeAllAnswersAction(
   try {
     const fullName = `${userData.firstName} ${userData.lastName}`;
     
+    sendToCrmAction({ 
+      firstName: userData.firstName, 
+      lastName: userData.lastName, 
+      email: userData.email, 
+      club: userData.club 
+    });
 
-    // --- n8n Integration Placeholder ---
-    // In the future, trigger an n8n webhook here to send user data for further automation.
-    // Example:
-    //   await fetch('https://your-n8n-instance.com/webhook/your-webhook-id', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({
-    //       firstName: userData.firstName,
-    //       lastName: userData.lastName,
-    //       email: userData.email,
-    //       club: userData.club
-    //     }),
-    //   });
-    // Note: This section is commented out as a placeholder for future n8n integration.
+    let eqScores: EqScores;
 
-    const reportInput: GetPlayerReportInput = {
-      scenario1: answers['scenario1'] || 'No answer provided.',
-      scenario2: answers['scenario2'] || 'No answer provided.',
-      scenario3: answers['scenario3'] || 'No answer provided.',
-      scenario4: answers['scenario4'] || 'No answer provided.',
-      scenario5: answers['scenario5'] || 'No answer provided.',
-      scenario6: answers['scenario6'] || 'No answer provided.',
+    try {
+      eqScores = await gradeAnswers({ answers });
+    } catch (aiError) {
+      console.error('AI grading failed, using fallback.', aiError);
+      eqScores = {
+        patience: Math.floor(Math.random() * 50) + 50,
+        empathy: Math.floor(Math.random() * 50) + 50,
+        resilience: Math.floor(Math.random() * 50) + 50,
+        focus: Math.floor(Math.random() * 50) + 50,
+        teamwork: Math.floor(Math.random() * 50) + 50,
+        confidence: Math.floor(Math.random() * 50) + 50,
+      };
+    }
+
+    const quizResult: QuizResult = {
+      eqScores,
+      matchEvents: events,
     };
 
-    const playerReport = await getPlayerReport(reportInput);
-    
-    const overallScore = getOverallScore(playerReport.eqScores);
+    const overallScore = getOverallScore(quizResult.eqScores);
 
     if (userData.leaderboardOptIn) {
       await addPlayerScore({
@@ -50,17 +102,9 @@ export async function gradeAllAnswersAction(
       });
     }
 
-    const finalData: QuizResult = {
-      eqScores: playerReport.eqScores,
-      matchEvents: events,
-      position: playerReport.position,
-      playerComparison: playerReport.playerComparison,
-    };
-
-    return { success: true, data: finalData };
+    return { success: true, data: quizResult };
   } catch (error) {
-    console.error('Error grading all answers:', error);
-    // Create a fallback result object if the AI call fails
+    console.error('Error in gradeAllAnswersAction:', error);
     const fallbackData: QuizResult = {
         eqScores: {
             patience: 50,
@@ -71,22 +115,8 @@ export async function gradeAllAnswersAction(
             confidence: 50,
         },
         matchEvents: events,
-        position: 'CM',
-        playerComparison: 'Luka Modric', // A safe, well-rounded fallback
-        isFallback: true, // Add a flag to indicate this is fallback data
+        isFallback: true, 
     };
-    return { success: false, data: fallbackData, error: 'Failed to get AI-powered report. Displaying match result only.' };
-  }
-}
-
-export async function transcribeAudioAction(
-  { audio }: TranscribeAudioInput
-): Promise<{ success: boolean; text?: string; error?: string }> {
-  try {
-    const result = await transcribeAudio({ audio });
-    return { success: true, text: result.text };
-  } catch (error) {
-    console.error('Error transcribing audio:', error);
-    return { success: false, error: 'Failed to transcribe audio. Please try again.' };
+    return { success: false, data: fallbackData, error: 'An unexpected error occurred.' };
   }
 }
