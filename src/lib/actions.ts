@@ -25,6 +25,7 @@ export async function sendToCrmAction(data: { firstName: string; lastName: strin
     email: email,
     organization: club || 'N/A',
     job_title: '', // Left blank as it's not captured in the form
+    marketing_list_id: 'db7755bb-d744-4c76-ab91-051b0f45f92a',
   });
 
   const urlWithParams = `${n8nWebhookUrl}?${params.toString()}`;
