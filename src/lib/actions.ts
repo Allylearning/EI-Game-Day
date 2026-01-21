@@ -6,7 +6,7 @@ import { addPlayerScore } from './db';
 import { getOverallScore } from './helpers';
 import { gradeAnswers } from '@/ai/flows/grade-answers-flow';
 
-async function sendToCrmAction(data: { firstName: string; lastName: string; email: string; club: string }) {
+export async function sendToCrmAction(data: { firstName: string; lastName: string; email: string; club: string }) {
   console.log('--- Starting n8n Webhook Submission ---');
 
   const { firstName, lastName, email, club } = data;
@@ -62,12 +62,7 @@ export async function gradeAllAnswersAction(
   try {
     const fullName = `${userData.firstName} ${userData.lastName}`;
 
-    sendToCrmAction({
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      email: userData.email,
-      club: userData.club
-    });
+    // CRM submission moved to start of game
 
     let eqScores: EqScores;
 

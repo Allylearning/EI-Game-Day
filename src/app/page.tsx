@@ -8,6 +8,7 @@ import ScenarioQuiz from '@/components/scenario-quiz';
 import ResultsPage from '@/components/results-page';
 import { Card, CardContent } from '@/components/ui/card';
 import { useConfetti } from '@/hooks/use-confetti';
+import { sendToCrmAction } from '@/lib/actions';
 
 type Step = 'form' | 'quiz' | 'results';
 
@@ -17,15 +18,27 @@ export default function Home() {
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
   const { showConfetti } = useConfetti();
 
-  const handleFormSubmit = (data: UserData) => {
+  const handleFormSubmit = async (data: UserData) => {
     setUserData(data);
     setStep('quiz');
+
+    // Trigger CRM webhook immediately
+    try {
+      await sendToCrmAction({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        club: data.club,
+      });
+    } catch (error) {
+      console.error("Failed to submit to CRM in background", error);
+    }
   };
 
   const handleQuizComplete = (result: QuizResult) => {
     setQuizResult(result);
     setStep('results');
-    
+
     // Show confetti for everyone on completion.
     // Add a small timeout to ensure the confetti component has time to mount.
     setTimeout(() => showConfetti(true), 100);
@@ -94,17 +107,17 @@ export default function Home() {
 
   return (
     <main className="relative flex min-h-screen w-full flex-col items-center justify-center p-4 sm:p-8 overflow-hidden">
-        <div className="fixed top-0 left-0 w-full h-full bg-black/60 z-10" />
-        <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="fixed top-0 left-0 w-full h-full object-cover z-0"
-        >
-            <source src="https://me-learning.s3.eu-west-2.amazonaws.com/marketing-videos/EI/football.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-        </video>
+      <div className="fixed top-0 left-0 w-full h-full bg-black/60 z-10" />
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="fixed top-0 left-0 w-full h-full object-cover z-0"
+      >
+        <source src="https://me-learning.s3.eu-west-2.amazonaws.com/marketing-videos/EI/football.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
       <div className="w-full max-w-2xl z-20">
         <Card className="relative bg-card/75 backdrop-blur-md border border-primary/20 shadow-2xl shadow-black/50">
           <CardContent className="p-4 sm:p-8">
