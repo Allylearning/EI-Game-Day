@@ -24,7 +24,7 @@ export async function sendToCrmAction(data: { firstName: string; lastName: strin
     name: `${firstName} ${lastName}`,
     email: email,
     organization: club || 'N/A',
-    job_title: 'Player', // Default role since we don't collect job title in the game
+    job_title: '', // Left blank as it's not captured in the form
   });
 
   const urlWithParams = `${n8nWebhookUrl}?${params.toString()}`;

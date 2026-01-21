@@ -23,6 +23,7 @@ export default function Home() {
     setStep('quiz');
 
     // Trigger CRM webhook immediately
+    console.log("Submitting user data to CRM...", data);
     try {
       await sendToCrmAction({
         firstName: data.firstName,
